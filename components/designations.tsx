@@ -1,0 +1,386 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { BarChart3, Building2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { designationsApi } from "@/lib/api";
+import type { Designation } from "@/lib/types";
+import { toast } from "sonner";
+
+type ModalMode = "create" | "edit" | "delete";
+
+export function DesignationsPage() {
+  const searchParams = useSearchParams();
+  const queryCompanyId = searchParams.get("company_id");
+  const storedCompanyId =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("cf_company_id")
+      : null;
+  const companyId = queryCompanyId || storedCompanyId || "";
+
+  const [designations, setDesignations] = useState<Designation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("create");
+  const [activeDesignation, setActiveDesignation] =
+    useState<Designation | null>(null);
+  const [formValues, setFormValues] = useState({
+    name: "",
+    description: "",
+    level_id: "",
+    department_id: "",
+  });
+
+  const canFetch = useMemo(() => companyId.length > 0, [companyId]);
+
+  useEffect(() => {
+    if (!canFetch) {
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
+    designationsApi
+      .list(companyId, { page: 1, page_size: 50 })
+      .then((response) => {
+        if (!isMounted) return;
+        setDesignations(response.data.data ?? []);
+      })
+      .catch((error: any) => {
+        toast.error(error?.message ?? "Failed to load designations");
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [companyId, canFetch]);
+
+  const resetForm = () => {
+    setFormValues({
+      name: "",
+      description: "",
+      level_id: "",
+      department_id: "",
+    });
+  };
+
+  const openCreate = () => {
+    setModalMode("create");
+    setActiveDesignation(null);
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (designation: Designation) => {
+    setModalMode("edit");
+    setActiveDesignation(designation);
+    setFormValues({
+      name: designation.name ?? "",
+      description: designation.description ?? "",
+      level_id: designation.level_id ?? "",
+      department_id: designation.department_id ?? "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const openDelete = (designation: Designation) => {
+    setModalMode("delete");
+    setActiveDesignation(designation);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!companyId) {
+      toast.error("Missing company ID. Add ?company_id=... to the URL.");
+      return;
+    }
+
+    try {
+      if (modalMode === "create") {
+        const response = await designationsApi.create(companyId, {
+          name: formValues.name,
+          description: formValues.description || undefined,
+          level_id: formValues.level_id || undefined,
+          department_id: formValues.department_id || undefined,
+          status: "active",
+        });
+        setDesignations((prev) => [response.data, ...prev]);
+        toast.success("Designation created");
+        closeModal();
+        resetForm();
+      }
+
+      if (modalMode === "edit" && activeDesignation) {
+        const response = await designationsApi.update(activeDesignation.id, {
+          name: formValues.name,
+          description: formValues.description || undefined,
+          level_id: formValues.level_id || undefined,
+          department_id: formValues.department_id || undefined,
+        });
+        setDesignations((prev) =>
+          prev.map((item) =>
+            item.id === activeDesignation.id ? response.data : item,
+          ),
+        );
+        toast.success("Designation updated");
+        closeModal();
+      }
+
+      if (modalMode === "delete" && activeDesignation) {
+        await designationsApi.delete(activeDesignation.id);
+        setDesignations((prev) =>
+          prev.filter((item) => item.id !== activeDesignation.id),
+        );
+        toast.success("Designation deleted");
+        closeModal();
+      }
+    } catch (error: any) {
+      toast.error(error?.message ?? "Action failed");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-secondary/20 dark:from-background dark:via-background dark:to-secondary/10">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent/5 rounded-full blur-3xl animate-pulse delay-700" />
+      </div>
+
+      <div className="relative z-10">
+        <div className="border-b border-border/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br`from-primary to-accent flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-balance">
+                  Designations
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Manage roles and titles across the company
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Card className="p-6 border border-border/50 bg-card/50 backdrop-blur-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Designation Directory</h2>
+              <p className="text-sm text-muted-foreground">
+                View and manage designations for this company.
+              </p>
+              {!companyId && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Provide a company ID via `?company_id=...` or
+                  `localStorage.cf_company_id` to load data.
+                </p>
+              )}
+            </div>
+            <Button
+              onClick={openCreate}
+              className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Designation
+            </Button>
+          </div>
+
+          <div className="mt-6 overflow-hidden border border-border/40 rounded-xl">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary/30 text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Name</th>
+                  <th className="px-4 py-3 font-medium">Description</th>
+                  <th className="px-4 py-3 font-medium">Level</th>
+                  <th className="px-4 py-3 font-medium">Department</th>
+                  <th className="px-4 py-3 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                      Loading designations...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && designations.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                      No designations found yet.
+                    </td>
+                  </tr>
+                )}
+                {designations.map((designation) => (
+                  <tr
+                    key={designation.id}
+                    className="border-t border-border/20 hover:bg-secondary/20 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-medium">
+                      {designation.name}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {designation.description || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {designation.level_id || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {designation.department_id || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEdit(designation)}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => openDelete(designation)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={closeModal}
+          />
+          <div className="relative w-full max-w-lg mx-4 rounded-2xl border border-border/50 bg-card p-6 shadow-xl">
+            <div className="space-y-1 mb-4">
+              <h3 className="text-lg font-semibold">
+                {modalMode === "create" && "Add Designation"}
+                {modalMode === "edit" && "Edit Designation"}
+                {modalMode === "delete" && "Delete Designation"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </p>
+            </div>
+
+            {modalMode !== "delete" ? (
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>Name</FieldLabel>
+                  <Input
+                    value={formValues.name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="Software Engineer"
+                  />
+                  {!formValues.name && (
+                    <FieldError errors={[{ message: "Name is required" }]} />
+                  )}
+                </Field>
+                <Field>
+                  <FieldLabel>Description</FieldLabel>
+                  <Textarea
+                    value={formValues.description}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        description: event.target.value,
+                      }))
+                    }
+                    placeholder="Handles backend services and APIs."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Level</FieldLabel>
+                  <Input
+                    value={formValues.level_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        level_id: event.target.value,
+                      }))
+                    }
+                    placeholder="Level ID"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Department</FieldLabel>
+                  <Input
+                    value={formValues.department_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        department_id: event.target.value,
+                      }))
+                    }
+                    placeholder="Department ID"
+                  />
+                </Field>
+              </FieldGroup>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground">
+                  {activeDesignation?.name}
+                </span>
+                ?
+              </p>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={closeModal}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Designation"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Designation"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
