@@ -53,6 +53,12 @@ export function DashboardPage() {
               description="Create and organize departments by function."
             />
             <DashboardCard
+              href="/employees"
+              icon={<Users2 className="w-5 h-5" />}
+              title="Employees"
+              description="Manage employee profiles and assignments."
+            />
+            <DashboardCard
               icon={<BarChart3 className="w-5 h-5" />}
               title="Designations"
               description="Define roles and job titles across teams."

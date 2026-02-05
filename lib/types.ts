@@ -29,7 +29,7 @@ export type Company = {
   phone?: string;
   logo_url?: string;
   status: "active" | "suspended" | "inactive";
-  settings?: Record<string, unknown>;
+  settings?: Record<string, unknown> | string;
   created_at?: string;
   updated_at?: string;
 };
@@ -63,6 +63,7 @@ export type Employee = {
   id: string;
   company_id: string;
   email: string;
+  password?: string;
   phone?: string;
   first_name?: string;
   last_name?: string;
@@ -97,4 +98,11 @@ export type Level = {
   description?: string;
   created_at?: string;
   updated_at?: string;
+};
+
+export type LoginResponse = {
+  token: string;
+  role?: string;
+  employee?: Employee;
+  company?: Company;
 };

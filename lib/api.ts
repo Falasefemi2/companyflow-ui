@@ -6,6 +6,7 @@ import type {
   Designation,
   Employee,
   Level,
+  LoginResponse,
   Paginated,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
@@ -17,6 +18,73 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+const normalizeDepartment = (item: any): Department => ({
+  id: item?.id ?? item?.ID,
+  company_id: item?.company_id ?? item?.CompanyID,
+  name: item?.name ?? item?.Name,
+  code: item?.code ?? item?.Code,
+  description: item?.description ?? item?.Description,
+  parent_department_id: item?.parent_department_id ?? item?.ParentDepartmentID,
+  cost_center: item?.cost_center ?? item?.CostCenter,
+  status: item?.status ?? item?.Status,
+  created_at: item?.created_at ?? item?.CreatedAt,
+  updated_at: item?.updated_at ?? item?.UpdatedAt,
+});
+
+const normalizeLevel = (item: any): Level => ({
+  id: item?.id ?? item?.ID,
+  company_id: item?.company_id ?? item?.CompanyID,
+  name: item?.name ?? item?.Name,
+  hierarchy_level: item?.hierarchy_level ?? item?.HierarchyLevel,
+  min_salary: item?.min_salary ?? item?.MinSalary,
+  max_salary: item?.max_salary ?? item?.MaxSalary,
+  description: item?.description ?? item?.Description,
+  created_at: item?.created_at ?? item?.CreatedAt,
+  updated_at: item?.updated_at ?? item?.UpdatedAt,
+});
+
+const normalizeDesignation = (item: any): Designation => ({
+  id: item?.id ?? item?.ID,
+  company_id: item?.company_id ?? item?.CompanyID,
+  name: item?.name ?? item?.Name,
+  description: item?.description ?? item?.Description,
+  level_id: item?.level_id ?? item?.LevelID,
+  department_id: item?.department_id ?? item?.DepartmentID,
+  status: item?.status ?? item?.Status,
+  created_at: item?.created_at ?? item?.CreatedAt,
+  updated_at: item?.updated_at ?? item?.UpdatedAt,
+});
+
+const normalizeEmployee = (item: any): Employee => ({
+  id: item?.id ?? item?.ID,
+  company_id: item?.company_id ?? item?.CompanyID,
+  email: item?.email ?? item?.Email,
+  phone: item?.phone ?? item?.Phone,
+  first_name: item?.first_name ?? item?.FirstName,
+  last_name: item?.last_name ?? item?.LastName,
+  employee_code: item?.employee_code ?? item?.EmployeeCode,
+  department_id: item?.department_id ?? item?.DepartmentID,
+  designation_id: item?.designation_id ?? item?.DesignationID,
+  level_id: item?.level_id ?? item?.LevelID,
+  manager_id: item?.manager_id ?? item?.ManagerID,
+  role_id: item?.role_id ?? item?.RoleID,
+  status: item?.status ?? item?.Status,
+  employment_type: item?.employment_type ?? item?.EmploymentType,
+  hire_date: item?.hire_date ?? item?.HireDate,
+  termination_date: item?.termination_date ?? item?.TerminationDate,
+  date_of_birth: item?.date_of_birth ?? item?.DateOfBirth,
+  gender: item?.gender ?? item?.Gender,
+  address: item?.address ?? item?.Address,
+  emergency_contact_name:
+    item?.emergency_contact_name ?? item?.EmergencyContactName,
+  emergency_contact_phone:
+    item?.emergency_contact_phone ?? item?.EmergencyContactPhone,
+  profile_image_url: item?.profile_image_url ?? item?.ProfileImageUrl,
+  last_login_at: item?.last_login_at ?? item?.LastLoginAt,
+  created_at: item?.created_at ?? item?.CreatedAt,
+  updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
 const getAuthToken = () => {
@@ -35,7 +103,7 @@ api.interceptors.request.use((config) => {
 
 export const authApi = {
   login: async (email: string, password: string) => {
-    const { data } = await api.post<ApiResponse<{ token: string }>>(
+    const { data } = await api.post<ApiResponse<LoginResponse>>(
       "/auth/login",
       { email, password },
     );
@@ -92,7 +160,14 @@ export const departmentsApi = {
       `/companies/${companyId}/departments`,
       { params },
     );
-    return data;
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeDepartment),
+      },
+    };
   },
   create: async (
     companyId: string,
@@ -108,14 +183,20 @@ export const departmentsApi = {
       `/companies/${companyId}/departments`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeDepartment(data.data),
+    };
   },
   update: async (id: string, payload: Partial<Department>) => {
     const { data } = await api.put<ApiResponse<Department>>(
       `/departments/${id}`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeDepartment(data.data),
+    };
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/departments/${id}`);
@@ -139,7 +220,14 @@ export const designationsApi = {
       `/companies/${companyId}/designations`,
       { params },
     );
-    return data;
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeDesignation),
+      },
+    };
   },
   create: async (
     companyId: string,
@@ -155,14 +243,20 @@ export const designationsApi = {
       `/companies/${companyId}/designations`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeDesignation(data.data),
+    };
   },
   update: async (id: string, payload: Partial<Designation>) => {
     const { data } = await api.put<ApiResponse<Designation>>(
       `/designations/${id}`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeDesignation(data.data),
+    };
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/designations/${id}`);
@@ -187,7 +281,14 @@ export const employeesApi = {
       `/companies/${companyId}/employees`,
       { params },
     );
-    return data;
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeEmployee),
+      },
+    };
   },
   create: async (
     companyId: string,
@@ -197,14 +298,30 @@ export const employeesApi = {
       `/companies/${companyId}/employees`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeEmployee(data.data),
+    };
   },
   update: async (id: string, payload: Partial<Employee>) => {
     const { data } = await api.put<ApiResponse<Employee>>(
       `/employees/${id}`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeEmployee(data.data),
+    };
+  },
+  patch: async (id: string, payload: Partial<Employee>) => {
+    const { data } = await api.patch<ApiResponse<Employee>>(
+      `/employees/${id}`,
+      payload,
+    );
+    return {
+      ...data,
+      data: normalizeEmployee(data.data),
+    };
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/employees/${id}`);
@@ -221,7 +338,14 @@ export const levelsApi = {
       `/companies/${companyId}/levels`,
       { params },
     );
-    return data;
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeLevel),
+      },
+    };
   },
   create: async (
     companyId: string,
@@ -231,14 +355,20 @@ export const levelsApi = {
       `/companies/${companyId}/levels`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeLevel(data.data),
+    };
   },
   update: async (id: string, payload: Partial<Level>) => {
     const { data } = await api.put<ApiResponse<Level>>(
       `/levels/${id}`,
       payload,
     );
-    return data;
+    return {
+      ...data,
+      data: normalizeLevel(data.data),
+    };
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/levels/${id}`);

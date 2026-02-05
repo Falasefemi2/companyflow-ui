@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, Layers3, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Layers3,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
@@ -24,6 +32,16 @@ export function LevelsPage() {
   const companyId = queryCompanyId || storedCompanyId || "";
 
   const [levels, setLevels] = useState<Level[]>([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total_pages: 1,
+    total: 0,
+    has_next: false,
+    has_prev: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -46,10 +64,21 @@ export function LevelsPage() {
     let isMounted = true;
     setIsLoading(true);
     levelsApi
-      .list(companyId, { page: 1, page_size: 50 })
+      .list(companyId, {
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+      })
       .then((response) => {
         if (!isMounted) return;
         setLevels(response.data.data ?? []);
+        setPagination({
+          page: response.data.page,
+          total_pages: response.data.total_pages,
+          total: response.data.total,
+          has_next: response.data.has_next,
+          has_prev: response.data.has_prev,
+        });
       })
       .catch((error: any) => {
         toast.error(error?.message ?? "Failed to load levels");
@@ -62,7 +91,11 @@ export function LevelsPage() {
     return () => {
       isMounted = false;
     };
-  }, [companyId, canFetch]);
+  }, [companyId, canFetch, page, pageSize, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const resetForm = () => {
     setFormValues({
@@ -170,7 +203,14 @@ export function LevelsPage() {
       <div className="relative z-10">
         <div className="border-b border-border/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-card/60 text-muted-foreground transition hover:text-foreground hover:border-border"
+                aria-label="Back to dashboard"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
               <div className="w-8 h-8 rounded-lg bg-linear-to-br`from-primary to-accent flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-primary-foreground" />
               </div>
@@ -202,13 +242,21 @@ export function LevelsPage() {
                 </p>
               )}
             </div>
-            <Button
-              onClick={openCreate}
-              className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Level
-            </Button>
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search levels"
+                className="md:w-64"
+              />
+              <Button
+                onClick={openCreate}
+                className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Level
+              </Button>
+            </div>
           </div>
 
           <div className="mt-6 overflow-hidden border border-border/40 rounded-xl">
@@ -280,6 +328,34 @@ export function LevelsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              Page {pagination.page} of {pagination.total_pages} ·{" "}
+              {pagination.total} total
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={!pagination.has_prev}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setPage((prev) =>
+                    Math.min(pagination.total_pages, prev + 1),
+                  )
+                }
+                disabled={!pagination.has_next}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </Card>
       </div>
