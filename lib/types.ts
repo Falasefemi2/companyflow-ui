@@ -106,3 +106,14 @@ export type LoginResponse = {
   employee?: Employee;
   company?: Company;
 };
+
+export type Role = {
+  id: string;
+  company_id: string;
+  name: string;
+  description?: string;
+  is_system_role?: boolean;
+  permission_cache?: string[];
+  created_at?: string;
+  updated_at?: string;
+};

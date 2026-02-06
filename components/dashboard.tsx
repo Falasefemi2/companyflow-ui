@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { BarChart3, Building2, Layers3, Users2 } from "lucide-react";
+import { BarChart3, Building2, Layers3, Shield, Users2 } from "lucide-react";
 import { Card } from "./ui/card";
 
 export function DashboardPage() {
@@ -24,9 +24,7 @@ export function DashboardPage() {
                 <h1 className="text-2xl font-bold tracking-tight text-balance">
                   CompanyFlow
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Admin Dashboard
-                </p>
+                <p className="text-sm text-muted-foreground">Admin Dashboard</p>
               </div>
             </div>
           </div>
@@ -65,10 +63,16 @@ export function DashboardPage() {
               href="/designations"
             />
             <DashboardCard
+              href="/levels"
               icon={<Layers3 className="w-5 h-5" />}
               title="Levels"
               description="Set up levels to support growth and structure."
-              href="/levels"
+            />
+            <DashboardCard
+              href="/roles"
+              icon={<Shield className="w-5 h-5" />}
+              title="Roles"
+              description="Manage user roles and permissions"
             />
           </div>
 

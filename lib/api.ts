@@ -8,6 +8,7 @@ import type {
   Level,
   LoginResponse,
   Paginated,
+  Role,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -87,6 +88,17 @@ const normalizeEmployee = (item: any): Employee => ({
   updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
+const normalizeRole = (item: any): Role => ({
+  id: item?.id ?? item.ID,
+  company_id: item?.company_id ?? item?.CompanyID,
+  name: item?.name ?? item?.Name,
+  description: item?.description ?? item?.Description,
+  is_system_role: item?.is_system_role ?? item?.is_system_role,
+  permission_cache: item?.permission_cache ?? item?.Permission_Cache,
+  created_at: item?.created_at ?? item?.CreatedAt,
+  updated_at: item?.updated_at ?? item.UpdatedAt,
+});
+
 const getAuthToken = () => {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem("cf_token");
@@ -103,10 +115,10 @@ api.interceptors.request.use((config) => {
 
 export const authApi = {
   login: async (email: string, password: string) => {
-    const { data } = await api.post<ApiResponse<LoginResponse>>(
-      "/auth/login",
-      { email, password },
-    );
+    const { data } = await api.post<ApiResponse<LoginResponse>>("/auth/login", {
+      email,
+      password,
+    });
     return data;
   },
 };
@@ -372,6 +384,50 @@ export const levelsApi = {
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/levels/${id}`);
+    return data;
+  },
+};
+
+export const roleApi = {
+  list: async (
+    companyId: string,
+    params: { page?: number; page_size?: number; search?: string },
+  ) => {
+    const { data } = await api.get<ApiResponse<Paginated<Role>>>(
+      `/companies/${companyId}/roles`,
+      { params },
+    );
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeRole),
+      },
+    };
+  },
+  create: async (
+    companyId: string,
+    payload: { name: string; description: string; permissions_cache: string[] },
+  ) => {
+    const { data } = await api.post<ApiResponse<Role>>(
+      `/companies/${companyId}/roles`,
+      payload,
+    );
+    return {
+      ...data,
+      data: normalizeRole(data.data),
+    };
+  },
+  update: async (id: string, payload: Partial<Role>) => {
+    const { data } = await api.put<ApiResponse<Role>>(`/roles/${id}`, payload);
+    return {
+      ...data,
+      data: normalizeRole(data.data),
+    };
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<null>>(`/roles/${id}`);
     return data;
   },
 };

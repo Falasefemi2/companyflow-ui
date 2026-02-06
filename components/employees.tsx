@@ -3,13 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Pencil,
-  Plus,
-  Trash2,
-  Users2,
-} from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Users2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
@@ -21,12 +15,14 @@ import {
   designationsApi,
   employeesApi,
   levelsApi,
+  roleApi,
 } from "@/lib/api";
-import type {
-  Department,
-  Designation,
-  Employee,
-  Level,
+import {
+  Role,
+  type Department,
+  type Designation,
+  type Employee,
+  type Level,
 } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -83,6 +79,7 @@ export function EmployeesPage() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isMetaLoading, setIsMetaLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -172,13 +169,22 @@ export function EmployeesPage() {
       levelsApi.list(companyId, { page: 1, page_size: 200 }),
       departmentsApi.list(companyId, { page: 1, page_size: 200 }),
       designationsApi.list(companyId, { page: 1, page_size: 200 }),
+      roleApi.list(companyId, { page: 1, page_size: 200 }),
     ])
-      .then(([levelsResponse, departmentsResponse, designationsResponse]) => {
-        if (!isMounted) return;
-        setLevels(levelsResponse.data.data ?? []);
-        setDepartments(departmentsResponse.data.data ?? []);
-        setDesignations(designationsResponse.data.data ?? []);
-      })
+      .then(
+        ([
+          levelsResponse,
+          departmentsResponse,
+          designationsResponse,
+          roleResponse,
+        ]) => {
+          if (!isMounted) return;
+          setLevels(levelsResponse.data.data ?? []);
+          setDepartments(departmentsResponse.data.data ?? []);
+          setDesignations(designationsResponse.data.data ?? []);
+          setRoles(roleResponse.data.data ?? []);
+        },
+      )
       .catch((error: any) => {
         toast.error(error?.message ?? "Failed to load employee metadata");
       })
@@ -203,6 +209,10 @@ export function EmployeesPage() {
   const designationLookup = useMemo(
     () => new Map(designations.map((item) => [item.id, item])),
     [designations],
+  );
+  const roleLookup = useMemo(
+    () => new Map(roles.map((item) => [item.id, item])),
+    [roles],
   );
 
   const resetForm = () => {
@@ -296,8 +306,10 @@ export function EmployeesPage() {
           hire_date: formValues.hire_date || undefined,
           date_of_birth: formValues.date_of_birth || undefined,
           address: formValues.address || undefined,
-          emergency_contact_name: formValues.emergency_contact_name || undefined,
-          emergency_contact_phone: formValues.emergency_contact_phone || undefined,
+          emergency_contact_name:
+            formValues.emergency_contact_name || undefined,
+          emergency_contact_phone:
+            formValues.emergency_contact_phone || undefined,
           profile_image_url: formValues.profile_image_url || undefined,
           password: formValues.password || undefined,
         });
@@ -321,8 +333,10 @@ export function EmployeesPage() {
           hire_date: formValues.hire_date || undefined,
           date_of_birth: formValues.date_of_birth || undefined,
           address: formValues.address || undefined,
-          emergency_contact_name: formValues.emergency_contact_name || undefined,
-          emergency_contact_phone: formValues.emergency_contact_phone || undefined,
+          emergency_contact_name:
+            formValues.emergency_contact_name || undefined,
+          emergency_contact_phone:
+            formValues.emergency_contact_phone || undefined,
           profile_image_url: formValues.profile_image_url || undefined,
           password: formValues.password || undefined,
         });
@@ -457,20 +471,20 @@ export function EmployeesPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {employee.department_id
-                        ? departmentLookup.get(employee.department_id)?.name ??
-                        employee.department_id
+                        ? (departmentLookup.get(employee.department_id)?.name ??
+                          employee.department_id)
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {employee.designation_id
-                        ? designationLookup.get(employee.designation_id)?.name ??
-                        employee.designation_id
+                        ? (designationLookup.get(employee.designation_id)
+                          ?.name ?? employee.designation_id)
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {employee.level_id
-                        ? levelLookup.get(employee.level_id)?.name ??
-                        employee.level_id
+                        ? (levelLookup.get(employee.level_id)?.name ??
+                          employee.level_id)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">
@@ -517,9 +531,7 @@ export function EmployeesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  setPage((prev) =>
-                    Math.min(pagination.total_pages, prev + 1),
-                  )
+                  setPage((prev) => Math.min(pagination.total_pages, prev + 1))
                 }
                 disabled={!pagination.has_next}
               >
@@ -532,10 +544,7 @@ export function EmployeesPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeModal}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} />
           <div className="relative h-full overflow-y-auto px-4 py-10">
             <div className="mx-auto w-full max-w-3xl rounded-2xl border border-border/50 bg-card p-6 shadow-xl">
               <div className="space-y-1 mb-4">
@@ -634,8 +643,9 @@ export function EmployeesPage() {
                       onChange={(event) =>
                         setFormValues((prev) => ({
                           ...prev,
-                          employment_type: event.target
-                            .value as NonNullable<Employee["employment_type"]>,
+                          employment_type: event.target.value as NonNullable<
+                            Employee["employment_type"]
+                          >,
                         }))
                       }
                     >
@@ -740,8 +750,8 @@ export function EmployeesPage() {
                     />
                   </Field>
                   <Field>
-                    <FieldLabel>Role ID</FieldLabel>
-                    <Input
+                    <FieldLabel>Role</FieldLabel>
+                    <Select
                       value={formValues.role_id}
                       onChange={(event) =>
                         setFormValues((prev) => ({
@@ -749,8 +759,15 @@ export function EmployeesPage() {
                           role_id: event.target.value,
                         }))
                       }
-                      placeholder="Role ID"
-                    />
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select role</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </Select>
                   </Field>
                   <Field>
                     <FieldLabel>Gender</FieldLabel>
@@ -862,7 +879,8 @@ export function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   Are you sure you want to delete{" "}
                   <span className="font-semibold text-foreground">
-                    {activeEmployee?.first_name ?? ""} {activeEmployee?.last_name ?? ""}
+                    {activeEmployee?.first_name ?? ""}{" "}
+                    {activeEmployee?.last_name ?? ""}
                   </span>
                   ?
                 </p>
@@ -877,9 +895,7 @@ export function EmployeesPage() {
                   onClick={handleSubmit}
                   disabled={
                     modalMode !== "delete" &&
-                    (!formValues.first_name ||
-                      !formValues.email ||
-                      !companyId)
+                    (!formValues.first_name || !formValues.email || !companyId)
                   }
                 >
                   {modalMode === "create" && "Create Employee"}
