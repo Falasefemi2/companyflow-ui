@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi, companiesApi } from "./api";
 import { toast } from "sonner";
 import { CreateCompanyPayload } from "./schema";
+import { AxiosError } from "axios";
 
 export const useCreateCompany = () => {
   const queryClient = useQueryClient();
@@ -14,8 +15,9 @@ export const useCreateCompany = () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
     },
 
-    onError: (error: any) => {
-      toast.error(error?.message ?? "Failed to create company");
+    onError: (error: AxiosError<unknown> | Error) => {
+      const errorMessage = (error as AxiosError<any>).response?.data?.message || error.message;
+      toast.error(errorMessage ?? "Failed to create company");
     },
   });
 };
@@ -51,8 +53,9 @@ export const useLogin = () => {
       toast.success(response?.message ?? "Login successful");
     },
 
-    onError: (error: any) => {
-      toast.error(error?.message ?? "Failed to log in");
+    onError: (error: AxiosError<unknown> | Error) => {
+      const errorMessage = (error as AxiosError<any>).response?.data?.message || error.message;
+      toast.error(errorMessage ?? "Failed to log in");
     },
   });
 };

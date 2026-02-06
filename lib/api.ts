@@ -9,6 +9,11 @@ import type {
   LoginResponse,
   Paginated,
   Role,
+  RawDepartment,
+  RawDesignation,
+  RawEmployee,
+  RawLevel,
+  RawRole,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -21,7 +26,7 @@ const api = axios.create({
   },
 });
 
-const normalizeDepartment = (item: any): Department => ({
+const normalizeDepartment = (item: RawDepartment): Department => ({
   id: item?.id ?? item?.ID,
   company_id: item?.company_id ?? item?.CompanyID,
   name: item?.name ?? item?.Name,
@@ -34,7 +39,7 @@ const normalizeDepartment = (item: any): Department => ({
   updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
-const normalizeLevel = (item: any): Level => ({
+const normalizeLevel = (item: RawLevel): Level => ({
   id: item?.id ?? item?.ID,
   company_id: item?.company_id ?? item?.CompanyID,
   name: item?.name ?? item?.Name,
@@ -46,7 +51,7 @@ const normalizeLevel = (item: any): Level => ({
   updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
-const normalizeDesignation = (item: any): Designation => ({
+const normalizeDesignation = (item: RawDesignation): Designation => ({
   id: item?.id ?? item?.ID,
   company_id: item?.company_id ?? item?.CompanyID,
   name: item?.name ?? item?.Name,
@@ -58,7 +63,7 @@ const normalizeDesignation = (item: any): Designation => ({
   updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
-const normalizeEmployee = (item: any): Employee => ({
+const normalizeEmployee = (item: RawEmployee): Employee => ({
   id: item?.id ?? item?.ID,
   company_id: item?.company_id ?? item?.CompanyID,
   email: item?.email ?? item?.Email,
@@ -88,12 +93,12 @@ const normalizeEmployee = (item: any): Employee => ({
   updated_at: item?.updated_at ?? item?.UpdatedAt,
 });
 
-const normalizeRole = (item: any): Role => ({
+const normalizeRole = (item: RawRole): Role => ({
   id: item?.id ?? item.ID,
   company_id: item?.company_id ?? item?.CompanyID,
   name: item?.name ?? item?.Name,
   description: item?.description ?? item?.Description,
-  is_system_role: item?.is_system_role ?? item?.is_system_role,
+  is_system_role: item?.is_system_role ?? item?.IsSystemRole,
   permission_cache: item?.permission_cache ?? item?.Permission_Cache,
   created_at: item?.created_at ?? item?.CreatedAt,
   updated_at: item?.updated_at ?? item.UpdatedAt,

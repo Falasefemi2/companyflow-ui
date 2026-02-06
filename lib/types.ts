@@ -35,34 +35,34 @@ export type Company = {
 };
 
 export type Department = {
-  id: string;
-  company_id: string;
-  name: string;
+  id?: string;
+  company_id?: string;
+  name?: string;
   code?: string;
   description?: string;
   parent_department_id?: string | null;
   cost_center?: string;
-  status: "active" | "inactive";
+  status?: "active" | "inactive";
   created_at?: string;
   updated_at?: string;
 };
 
 export type Designation = {
-  id: string;
-  company_id: string;
-  name: string;
+  id?: string;
+  company_id?: string;
+  name?: string;
   description?: string;
   level_id?: string;
   department_id?: string;
-  status: "active" | "inactive";
+  status?: "active" | "inactive";
   created_at?: string;
   updated_at?: string;
 };
 
 export type Employee = {
-  id: string;
-  company_id: string;
-  email: string;
+  id?: string;
+  company_id?: string;
+  email?: string;
   password?: string;
   phone?: string;
   first_name?: string;
@@ -89,9 +89,9 @@ export type Employee = {
 };
 
 export type Level = {
-  id: string;
-  company_id: string;
-  name: string;
+  id?: string;
+  company_id?: string;
+  name?: string;
   hierarchy_level?: number;
   min_salary?: number;
   max_salary?: number;
@@ -108,12 +108,151 @@ export type LoginResponse = {
 };
 
 export type Role = {
-  id: string;
-  company_id: string;
-  name: string;
+  id?: string;
+  company_id?: string;
+  name?: string;
   description?: string;
   is_system_role?: boolean;
   permission_cache?: string[];
   created_at?: string;
   updated_at?: string;
+};
+
+export type RawDepartment = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  name?: string;
+  Name?: string;
+  code?: string;
+  Code?: string;
+  description?: string;
+  Description?: string;
+  parent_department_id?: string | null;
+  ParentDepartmentID?: string | null;
+  cost_center?: string;
+  CostCenter?: string;
+  status?: "active" | "inactive";
+  Status?: "active" | "inactive";
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+};
+
+export type RawLevel = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  name?: string;
+  Name?: string;
+  hierarchy_level?: number;
+  HierarchyLevel?: number;
+  min_salary?: number;
+  MinSalary?: number;
+  max_salary?: number;
+  MaxSalary?: number;
+  description?: string;
+  Description?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+};
+
+export type RawDesignation = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  name?: string;
+  Name?: string;
+  description?: string;
+  Description?: string;
+  level_id?: string;
+  LevelID?: string;
+  department_id?: string;
+  DepartmentID?: string;
+  status?: "active" | "inactive";
+  Status?: "active" | "inactive";
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+};
+
+export type RawEmployee = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  email?: string;
+  Email?: string;
+  password?: string;
+  Password?: string;
+  phone?: string;
+  Phone?: string;
+  first_name?: string;
+  FirstName?: string;
+  last_name?: string;
+  LastName?: string;
+  employee_code?: string;
+  EmployeeCode?: string;
+  department_id?: string;
+  DepartmentID?: string;
+  designation_id?: string;
+  DesignationID?: string;
+  level_id?: string;
+  LevelID?: string;
+  manager_id?: string;
+  ManagerID?: string;
+  role_id?: string;
+  RoleID?: string;
+  status?: "active" | "inactive" | "on_leave" | "terminated" | "probation";
+  Status?: "active" | "inactive" | "on_leave" | "terminated" | "probation";
+  employment_type?: "full_time" | "part_time" | "contract" | "intern";
+  EmploymentType?: "full_time" | "part_time" | "contract" | "intern";
+  hire_date?: string;
+  HireDate?: string;
+  termination_date?: string;
+  TerminationDate?: string;
+  date_of_birth?: string;
+  DateOfBirth?: string;
+  gender?: string;
+  Gender?: string;
+  address?: string;
+  Address?: string;
+  emergency_contact_name?: string;
+  EmergencyContactName?: string;
+  emergency_contact_phone?: string;
+  EmergencyContactPhone?: string;
+  profile_image_url?: string;
+  ProfileImageUrl?: string;
+  last_login_at?: string;
+  LastLoginAt?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+};
+
+export type RawRole = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  name?: string;
+  Name?: string;
+  description?: string;
+  Description?: string;
+  is_system_role?: boolean;
+  IsSystemRole?: boolean;
+  permission_cache?: string[];
+  Permission_Cache?: string[];
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
 };
