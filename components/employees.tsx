@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,24 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import {
+  Drawer,
+  DrawerBody,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "./ui/drawer";
 import {
   departmentsApi,
   designationsApi,
@@ -363,12 +381,7 @@ export function EmployeesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-background to-secondary/20 dark:from-background dark:via-background dark:to-secondary/10">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent/5 rounded-full blur-3xl animate-pulse delay-700" />
-      </div>
-
+    <div className="min-h-screen bg-background dark:bg-background">
       <div className="relative z-10">
         <div className="border-b border-border/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -380,7 +393,7 @@ export function EmployeesPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br`from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Users2 className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
@@ -397,516 +410,514 @@ export function EmployeesPage() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Card className="p-6 border border-border/50 bg-card/50 backdrop-blur-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Employee Directory</h2>
-              <p className="text-sm text-muted-foreground">
-                View and manage employees for this company.
-              </p>
-              {!companyId && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Provide a company ID via `?company_id=...` or
-                  `localStorage.cf_company_id` to load data.
+        <Card className="border border-border/50 bg-card">
+          <div className="p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">Employee Directory</h2>
+                <p className="text-sm text-muted-foreground">
+                  View and manage employees for this company.
                 </p>
-              )}
-            </div>
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search employees"
-                className="md:w-64"
-              />
-              <Button
-                onClick={openCreate}
-                className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Employee
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-6 overflow-hidden border border-border/40 rounded-xl">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-secondary/30 text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Department</th>
-                  <th className="px-4 py-3 font-medium">Designation</th>
-                  <th className="px-4 py-3 font-medium">Level</th>
-                  <th className="px-4 py-3 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr>
-                    <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                      Loading employees...
-                    </td>
-                  </tr>
+                {!companyId && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Provide a company ID via `?company_id=...` or
+                    `localStorage.cf_company_id` to load data.
+                  </p>
                 )}
-                {!isLoading && employees.length === 0 && (
-                  <tr>
-                    <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                      No employees found yet.
-                    </td>
-                  </tr>
-                )}
-                {employees.map((employee) => (
-                  <tr
-                    key={employee.id}
-                    className="border-t border-border/20 hover:bg-secondary/20 transition-colors"
-                  >
-                    <td className="px-4 py-3 font-medium">
-                      {employee.first_name || employee.last_name
-                        ? `${employee.first_name ?? ""} ${employee.last_name ?? ""
-                          }`.trim()
-                        : employee.email}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {employee.email}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {employee.department_id
-                        ? (departmentLookup.get(employee.department_id)?.name ??
-                          employee.department_id)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {employee.designation_id
-                        ? (designationLookup.get(employee.designation_id)
-                          ?.name ?? employee.designation_id)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {employee.level_id
-                        ? (levelLookup.get(employee.level_id)?.name ??
-                          employee.level_id)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEdit(employee)}
-                        >
-                          <Pencil className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => openDelete(employee)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              Page {pagination.page} of {pagination.total_pages} ·{" "}
-              {pagination.total} total
+              </div>
+              <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search employees"
+                  className="md:w-64"
+                />
+                <Button
+                  onClick={openCreate}
+                  className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Employee
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                disabled={!pagination.has_prev}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setPage((prev) => Math.min(pagination.total_pages, prev + 1))
-                }
-                disabled={!pagination.has_next}
-              >
-                Next
-              </Button>
+
+            <div className="overflow-x-auto border border-border/50 rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-secondary/50 hover:bg-secondary/50">
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Designation</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Loading employees...
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isLoading && employees.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        No employees found yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {employees.map((employee) => (
+                    <TableRow key={employee.id}>
+                      <TableCell className="font-medium">
+                        {employee.first_name || employee.last_name
+                          ? `${employee.first_name ?? ""} ${employee.last_name ?? ""
+                            }`.trim()
+                          : employee.email}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {employee.email}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {employee.department_id
+                          ? (departmentLookup.get(employee.department_id)?.name ??
+                            employee.department_id)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {employee.designation_id
+                          ? (designationLookup.get(employee.designation_id)
+                            ?.name ?? employee.designation_id)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {employee.level_id
+                          ? (levelLookup.get(employee.level_id)?.name ??
+                            employee.level_id)
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(employee)}
+                          >
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openDelete(employee)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                Page {pagination.page} of {pagination.total_pages} ·{" "}
+                {pagination.total} total
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={!pagination.has_prev}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPage((prev) =>
+                      Math.min(pagination.total_pages, prev + 1),
+                    )
+                  }
+                  disabled={!pagination.has_next}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </Card>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/40" onClick={closeModal} />
-          <div className="relative h-full overflow-y-auto px-4 py-10">
-            <div className="mx-auto w-full max-w-3xl rounded-2xl border border-border/50 bg-card p-6 shadow-xl">
-              <div className="space-y-1 mb-4">
-                <h3 className="text-lg font-semibold">
-                  {modalMode === "create" && "Add Employee"}
-                  {modalMode === "edit" && "Edit Employee"}
-                  {modalMode === "delete" && "Delete Employee"}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {modalMode === "delete"
-                    ? "This action cannot be undone."
-                    : "Fill in the details below."}
-                </p>
-              </div>
+      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>
+              {modalMode === "create" && "Add Employee"}
+              {modalMode === "edit" && "Edit Employee"}
+              {modalMode === "delete" && "Delete Employee"}
+            </DrawerTitle>
+            <DrawerDescription>
+              {modalMode === "delete"
+                ? "This action cannot be undone."
+                : "Fill in the details below."}
+            </DrawerDescription>
+          </DrawerHeader>
 
-              {modalMode !== "delete" ? (
-                <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <Field>
-                    <FieldLabel>First Name</FieldLabel>
-                    <Input
-                      value={formValues.first_name}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          first_name: event.target.value,
-                        }))
-                      }
-                      placeholder="Femi"
+          <DrawerBody>
+            {modalMode !== "delete" ? (
+              <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel>First Name</FieldLabel>
+                  <Input
+                    value={formValues.first_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        first_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Femi"
+                  />
+                  {!formValues.first_name && (
+                    <FieldError
+                      errors={[{ message: "First name is required" }]}
                     />
-                    {!formValues.first_name && (
-                      <FieldError
-                        errors={[{ message: "First name is required" }]}
-                      />
-                    )}
-                  </Field>
-                  <Field>
-                    <FieldLabel>Last Name</FieldLabel>
-                    <Input
-                      value={formValues.last_name}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          last_name: event.target.value,
-                        }))
-                      }
-                      placeholder="Falase"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Email</FieldLabel>
-                    <Input
-                      type="email"
-                      value={formValues.email}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="name@company.com"
-                    />
-                    {!formValues.email && (
-                      <FieldError errors={[{ message: "Email is required" }]} />
-                    )}
-                  </Field>
-                  <Field>
-                    <FieldLabel>Phone</FieldLabel>
-                    <Input
-                      value={formValues.phone}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          phone: event.target.value,
-                        }))
-                      }
-                      placeholder="+234..."
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Employee Code</FieldLabel>
-                    <Input
-                      value={formValues.employee_code}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          employee_code: event.target.value,
-                        }))
-                      }
-                      placeholder="EMP-001"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Employment Type</FieldLabel>
-                    <Select
-                      value={formValues.employment_type}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          employment_type: event.target.value as NonNullable<
-                            Employee["employment_type"]
-                          >,
-                        }))
-                      }
-                    >
-                      {employmentOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option?.replace("_", " ")}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Status</FieldLabel>
-                    <Select
-                      value={formValues.status}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          status: event.target.value as NonNullable<
-                            Employee["status"]
-                          >,
-                        }))
-                      }
-                    >
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option?.replace("_", " ")}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Department</FieldLabel>
-                    <Select
-                      value={formValues.department_id}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          department_id: event.target.value,
-                        }))
-                      }
-                      disabled={isMetaLoading || !companyId}
-                    >
-                      <option value="">Select department</option>
-                      {departments.map((department) => (
-                        <option key={department.id} value={department.id}>
-                          {department.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Designation</FieldLabel>
-                    <Select
-                      value={formValues.designation_id}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          designation_id: event.target.value,
-                        }))
-                      }
-                      disabled={isMetaLoading || !companyId}
-                    >
-                      <option value="">Select designation</option>
-                      {designations.map((designation) => (
-                        <option key={designation.id} value={designation.id}>
-                          {designation.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Level</FieldLabel>
-                    <Select
-                      value={formValues.level_id}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          level_id: event.target.value,
-                        }))
-                      }
-                      disabled={isMetaLoading || !companyId}
-                    >
-                      <option value="">Select level</option>
-                      {levels.map((level) => (
-                        <option key={level.id} value={level.id}>
-                          {level.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Manager ID</FieldLabel>
-                    <Input
-                      value={formValues.manager_id}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          manager_id: event.target.value,
-                        }))
-                      }
-                      placeholder="Manager ID"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Role</FieldLabel>
-                    <Select
-                      value={formValues.role_id}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          role_id: event.target.value,
-                        }))
-                      }
-                      disabled={isMetaLoading || !companyId}
-                    >
-                      <option value="">Select role</option>
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Gender</FieldLabel>
-                    <Input
-                      value={formValues.gender}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          gender: event.target.value,
-                        }))
-                      }
-                      placeholder="Male / Female"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Hire Date</FieldLabel>
-                    <Input
-                      type="date"
-                      value={formValues.hire_date}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          hire_date: event.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Date of Birth</FieldLabel>
-                    <Input
-                      type="date"
-                      value={formValues.date_of_birth}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          date_of_birth: event.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field className="md:col-span-2">
-                    <FieldLabel>Address</FieldLabel>
-                    <Textarea
-                      value={formValues.address}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          address: event.target.value,
-                        }))
-                      }
-                      placeholder="Employee address"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Emergency Contact Name</FieldLabel>
-                    <Input
-                      value={formValues.emergency_contact_name}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          emergency_contact_name: event.target.value,
-                        }))
-                      }
-                      placeholder="Contact name"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Emergency Contact Phone</FieldLabel>
-                    <Input
-                      value={formValues.emergency_contact_phone}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          emergency_contact_phone: event.target.value,
-                        }))
-                      }
-                      placeholder="+234..."
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Profile Image URL</FieldLabel>
-                    <Input
-                      value={formValues.profile_image_url}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          profile_image_url: event.target.value,
-                        }))
-                      }
-                      placeholder="https://..."
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Password</FieldLabel>
-                    <Input
-                      type="password"
-                      value={formValues.password}
-                      onChange={(event) =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          password: event.target.value,
-                        }))
-                      }
-                      placeholder="Set password"
-                    />
-                  </Field>
-                </FieldGroup>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Are you sure you want to delete{" "}
-                  <span className="font-semibold text-foreground">
-                    {activeEmployee?.first_name ?? ""}{" "}
-                    {activeEmployee?.last_name ?? ""}
-                  </span>
-                  ?
-                </p>
-              )}
+                  )}
+                </Field>
+                <Field>
+                  <FieldLabel>Last Name</FieldLabel>
+                  <Input
+                    value={formValues.last_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        last_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Falase"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
+                    type="email"
+                    value={formValues.email}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="name@company.com"
+                  />
+                  {!formValues.email && (
+                    <FieldError errors={[{ message: "Email is required" }]} />
+                  )}
+                </Field>
+                <Field>
+                  <FieldLabel>Phone</FieldLabel>
+                  <Input
+                    value={formValues.phone}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="+234..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Employee Code</FieldLabel>
+                  <Input
+                    value={formValues.employee_code}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        employee_code: event.target.value,
+                      }))
+                    }
+                    placeholder="EMP-001"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Employment Type</FieldLabel>
+                  <Select
+                    value={formValues.employment_type}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        employment_type: event.target.value as NonNullable<
+                          Employee["employment_type"]
+                        >,
+                      }))
+                    }
+                  >
+                    {employmentOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option?.replace("_", " ")}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Status</FieldLabel>
+                  <Select
+                    value={formValues.status}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        status: event.target.value as NonNullable<
+                          Employee["status"]
+                        >,
+                      }))
+                    }
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option?.replace("_", " ")}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Department</FieldLabel>
+                  <Select
+                    value={formValues.department_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        department_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select department</option>
+                    {departments.map((department) => (
+                      <option key={department.id} value={department.id}>
+                        {department.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Designation</FieldLabel>
+                  <Select
+                    value={formValues.designation_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        designation_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select designation</option>
+                    {designations.map((designation) => (
+                      <option key={designation.id} value={designation.id}>
+                        {designation.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Level</FieldLabel>
+                  <Select
+                    value={formValues.level_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        level_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select level</option>
+                    {levels.map((level) => (
+                      <option key={level.id} value={level.id}>
+                        {level.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Manager ID</FieldLabel>
+                  <Input
+                    value={formValues.manager_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        manager_id: event.target.value,
+                      }))
+                    }
+                    placeholder="Manager ID"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Role</FieldLabel>
+                  <Select
+                    value={formValues.role_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        role_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Gender</FieldLabel>
+                  <Input
+                    value={formValues.gender}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        gender: event.target.value,
+                      }))
+                    }
+                    placeholder="Male / Female"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Hire Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={formValues.hire_date}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        hire_date: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Date of Birth</FieldLabel>
+                  <Input
+                    type="date"
+                    value={formValues.date_of_birth}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        date_of_birth: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field className="md:col-span-2">
+                  <FieldLabel>Address</FieldLabel>
+                  <Textarea
+                    value={formValues.address}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        address: event.target.value,
+                      }))
+                    }
+                    placeholder="Employee address"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Emergency Contact Name</FieldLabel>
+                  <Input
+                    value={formValues.emergency_contact_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        emergency_contact_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Contact name"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Emergency Contact Phone</FieldLabel>
+                  <Input
+                    value={formValues.emergency_contact_phone}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        emergency_contact_phone: event.target.value,
+                      }))
+                    }
+                    placeholder="+234..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Profile Image URL</FieldLabel>
+                  <Input
+                    value={formValues.profile_image_url}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        profile_image_url: event.target.value,
+                      }))
+                    }
+                    placeholder="https://..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Password</FieldLabel>
+                  <Input
+                    type="password"
+                    value={formValues.password}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Set password"
+                  />
+                </Field>
+              </FieldGroup>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground">
+                  {activeEmployee?.first_name ?? ""}{" "}
+                  {activeEmployee?.last_name ?? ""}
+                </span>
+                ?
+              </p>
+            )}
+          </DrawerBody>
 
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button variant="outline" onClick={closeModal}>
-                  Cancel
-                </Button>
-                <Button
-                  variant={modalMode === "delete" ? "destructive" : "default"}
-                  onClick={handleSubmit}
-                  disabled={
-                    modalMode !== "delete" &&
-                    (!formValues.first_name || !formValues.email || !companyId)
-                  }
-                >
-                  {modalMode === "create" && "Create Employee"}
-                  {modalMode === "edit" && "Save Changes"}
-                  {modalMode === "delete" && "Delete Employee"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+            <Button
+              variant={modalMode === "delete" ? "destructive" : "default"}
+              onClick={handleSubmit}
+              disabled={
+                modalMode !== "delete" &&
+                (!formValues.first_name || !formValues.email || !companyId)
+              }
+            >
+              {modalMode === "create" && "Create Employee"}
+              {modalMode === "edit" && "Save Changes"}
+              {modalMode === "delete" && "Delete Employee"}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

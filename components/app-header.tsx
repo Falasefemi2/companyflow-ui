@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "./ui/button";
 
 type UserInfo = {
   name: string;
@@ -12,11 +15,17 @@ type UserInfo = {
 
 export function AppHeader() {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<UserInfo>({
     name: "",
     role: "",
     hasToken: false,
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -62,6 +71,21 @@ export function AppHeader() {
           CompanyFlow
         </Link>
         <div className="flex items-center gap-3">
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-9 w-9"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          )}
           <div className="text-right">
             <div className="text-sm font-semibold leading-tight">
               {user.name || "Account"}
