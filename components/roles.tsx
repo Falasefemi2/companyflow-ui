@@ -31,6 +31,15 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "./ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { useResponsiveModal } from "@/hooks/use-responsive-modal";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -42,6 +51,7 @@ export function RolesPage() {
       ? window.localStorage.getItem("cf_company_id")
       : null;
   const companyId = queryCompanyId || storedCompanyId || "";
+  const { isMobile, mounted } = useResponsiveModal();
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [search, setSearch] = useState("");
@@ -367,22 +377,23 @@ export function RolesPage() {
         </Card>
       </div>
 
-      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {modalMode === "create" && "Add Role"}
-              {modalMode === "edit" && "Edit Role"}
-              {modalMode === "delete" && "Delete Role"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {modalMode === "delete"
-                ? "This action cannot be undone."
-                : "Fill in the details below."}
-            </DrawerDescription>
-          </DrawerHeader>
+      {mounted && !isMobile ? (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" && "Add Role"}
+                {modalMode === "edit" && "Edit Role"}
+                {modalMode === "delete" && "Delete Role"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <DrawerBody>
+            <div className="space-y-4">
             {modalMode !== "delete" ? (
               <FieldGroup>
                 <Field>
@@ -434,26 +445,115 @@ export function RolesPage() {
                 ?
               </p>
             )}
-          </DrawerBody>
+            </div>
 
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-            <Button
-              variant={modalMode === "delete" ? "destructive" : "default"}
-              onClick={handleSubmit}
-              disabled={
-                modalMode !== "delete" && (!formValues.name || !companyId)
-              }
-            >
-              {modalMode === "create" && "Create Role"}
-              {modalMode === "edit" && "Save Changes"}
-              {modalMode === "delete" && "Delete Role"}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Role"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Role"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Role"}
+                {modalMode === "edit" && "Edit Role"}
+                {modalMode === "delete" && "Delete Role"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <DrawerBody className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Administrator"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Full system access and management capabilities."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Permissions</FieldLabel>
+                    <div className="space-y-2 max-h-64 overflow-y-auto border border-border/40 rounded-lg p-3">
+                      <div className="text-sm text-muted-foreground">
+                        {formValues.permissions_cache.length === 0
+                          ? "No permissions selected"
+                          : `${formValues.permissions_cache.length} permission(s) selected`}
+                      </div>
+                    </div>
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeRole?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Role"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Role"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }

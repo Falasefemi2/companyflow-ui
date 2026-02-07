@@ -35,9 +35,18 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "./ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { departmentsApi, designationsApi, levelsApi } from "@/lib/api";
 import type { Department, Designation, Level } from "@/lib/types";
 import { toast } from "sonner";
+import { useResponsiveModal } from "@/hooks/use-responsive-modal";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -49,6 +58,7 @@ export function DesignationsPage() {
       ? window.localStorage.getItem("cf_company_id")
       : null;
   const companyId = queryCompanyId || storedCompanyId || "";
+  const { isMobile, mounted } = useResponsiveModal();
 
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [search, setSearch] = useState("");
@@ -411,123 +421,243 @@ export function DesignationsPage() {
         </Card>
       </div>
 
-      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {modalMode === "create" && "Add Designation"}
-              {modalMode === "edit" && "Edit Designation"}
-              {modalMode === "delete" && "Delete Designation"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {modalMode === "delete"
-                ? "This action cannot be undone."
-                : "Fill in the details below."}
-            </DrawerDescription>
-          </DrawerHeader>
+      {mounted && !isMobile ? (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" && "Add Designation"}
+                {modalMode === "edit" && "Edit Designation"}
+                {modalMode === "delete" && "Delete Designation"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <DrawerBody>
-            {modalMode !== "delete" ? (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input
-                    value={formValues.name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="Software Engineer"
-                  />
-                  {!formValues.name && (
-                    <FieldError errors={[{ message: "Name is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  <Textarea
-                    value={formValues.description}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                    placeholder="Handles backend services and APIs."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Level</FieldLabel>
-                  <Select
-                    value={formValues.level_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        level_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select level</option>
-                    {levels.map((level) => (
-                      <option key={level.id} value={level.id}>
-                        {level.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Department</FieldLabel>
-                  <Select
-                    value={formValues.department_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        department_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select department</option>
-                    {departments.map((department) => (
-                      <option key={department.id} value={department.id}>
-                        {department.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeDesignation?.name}
-                </span>
-                ?
-              </p>
-            )}
-          </DrawerBody>
+            <div className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Software Engineer"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Handles backend services and APIs."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Level</FieldLabel>
+                    <Select
+                      value={formValues.level_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          level_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select level</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Department</FieldLabel>
+                    <Select
+                      value={formValues.department_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          department_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select department</option>
+                      {departments.map((department) => (
+                        <option key={department.id} value={department.id}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeDesignation?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </div>
 
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-            <Button
-              variant={modalMode === "delete" ? "destructive" : "default"}
-              onClick={handleSubmit}
-              disabled={
-                modalMode !== "delete" && (!formValues.name || !companyId)
-              }
-            >
-              {modalMode === "create" && "Create Designation"}
-              {modalMode === "edit" && "Save Changes"}
-              {modalMode === "delete" && "Delete Designation"}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Designation"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Designation"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Designation"}
+                {modalMode === "edit" && "Edit Designation"}
+                {modalMode === "delete" && "Delete Designation"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <DrawerBody className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Software Engineer"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Handles backend services and APIs."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Level</FieldLabel>
+                    <Select
+                      value={formValues.level_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          level_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select level</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Department</FieldLabel>
+                    <Select
+                      value={formValues.department_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          department_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select department</option>
+                      {departments.map((department) => (
+                        <option key={department.id} value={department.id}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeDesignation?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Designation"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Designation"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }

@@ -27,9 +27,18 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "./ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { departmentsApi } from "@/lib/api";
 import type { Department } from "@/lib/types";
 import { toast } from "sonner";
+import { useResponsiveModal } from "@/hooks/use-responsive-modal";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -41,6 +50,7 @@ export function DepartmentsPage() {
       ? window.localStorage.getItem("cf_company_id")
       : null;
   const companyId = queryCompanyId || storedCompanyId || "";
+  const { isMobile, mounted } = useResponsiveModal();
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [search, setSearch] = useState("");
@@ -344,96 +354,189 @@ export function DepartmentsPage() {
         </Card>
       </div>
 
-      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {modalMode === "create" && "Add Department"}
-              {modalMode === "edit" && "Edit Department"}
-              {modalMode === "delete" && "Delete Department"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {modalMode === "delete"
-                ? "This action cannot be undone."
-                : "Fill in the details below."}
-            </DrawerDescription>
-          </DrawerHeader>
+      {mounted && !isMobile ? (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" && "Add Department"}
+                {modalMode === "edit" && "Edit Department"}
+                {modalMode === "delete" && "Delete Department"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <DrawerBody>
-            {modalMode !== "delete" ? (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input
-                    value={formValues.name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="Engineering"
-                  />
-                  {!formValues.name && (
-                    <FieldError errors={[{ message: "Name is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Code</FieldLabel>
-                  <Input
-                    value={formValues.code}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        code: event.target.value,
-                      }))
-                    }
-                    placeholder="ENG"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  <Textarea
-                    value={formValues.description}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                    placeholder="Handles product development and engineering."
-                  />
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeDepartment?.name}
-                </span>
-                ?
-              </p>
-            )}
-          </DrawerBody>
+            <div className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Engineering"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Code</FieldLabel>
+                    <Input
+                      value={formValues.code}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          code: event.target.value,
+                        }))
+                      }
+                      placeholder="ENG"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Handles product development and engineering."
+                    />
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeDepartment?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </div>
 
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-            <Button
-              variant={modalMode === "delete" ? "destructive" : "default"}
-              onClick={handleSubmit}
-              disabled={
-                modalMode !== "delete" && (!formValues.name || !companyId)
-              }
-            >
-              {modalMode === "create" && "Create Department"}
-              {modalMode === "edit" && "Save Changes"}
-              {modalMode === "delete" && "Delete Department"}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Department"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Department"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Department"}
+                {modalMode === "edit" && "Edit Department"}
+                {modalMode === "delete" && "Delete Department"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <DrawerBody className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Engineering"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Code</FieldLabel>
+                    <Input
+                      value={formValues.code}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          code: event.target.value,
+                        }))
+                      }
+                      placeholder="ENG"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Handles product development and engineering."
+                    />
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeDepartment?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Department"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Department"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }

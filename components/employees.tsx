@@ -29,6 +29,14 @@ import {
   DrawerTitle,
 } from "./ui/drawer";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import {
   departmentsApi,
   designationsApi,
   employeesApi,
@@ -43,6 +51,7 @@ import {
   type Level,
 } from "@/lib/types";
 import { toast } from "sonner";
+import { useResponsiveModal } from "@/hooks/use-responsive-modal";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -92,6 +101,7 @@ export function EmployeesPage() {
       ? window.localStorage.getItem("cf_company_id")
       : null;
   const companyId = queryCompanyId || storedCompanyId || "";
+  const { isMobile, mounted } = useResponsiveModal();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
@@ -556,22 +566,23 @@ export function EmployeesPage() {
         </Card>
       </div>
 
-      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {modalMode === "create" && "Add Employee"}
-              {modalMode === "edit" && "Edit Employee"}
-              {modalMode === "delete" && "Delete Employee"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {modalMode === "delete"
-                ? "This action cannot be undone."
-                : "Fill in the details below."}
-            </DrawerDescription>
-          </DrawerHeader>
+      {mounted && !isMobile ? (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" && "Add Employee"}
+                {modalMode === "edit" && "Edit Employee"}
+                {modalMode === "delete" && "Delete Employee"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <DrawerBody>
+            <div className="space-y-4 max-h-[calc(90vh-180px)] overflow-y-auto">
             {modalMode !== "delete" ? (
               <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field>
@@ -897,27 +908,395 @@ export function EmployeesPage() {
                 ?
               </p>
             )}
-          </DrawerBody>
+            </div>
 
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-            <Button
-              variant={modalMode === "delete" ? "destructive" : "default"}
-              onClick={handleSubmit}
-              disabled={
-                modalMode !== "delete" &&
-                (!formValues.first_name || !formValues.email || !companyId)
-              }
-            >
-              {modalMode === "create" && "Create Employee"}
-              {modalMode === "edit" && "Save Changes"}
-              {modalMode === "delete" && "Delete Employee"}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" &&
+                  (!formValues.first_name || !formValues.email || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Employee"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Employee"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Employee"}
+                {modalMode === "edit" && "Edit Employee"}
+                {modalMode === "delete" && "Delete Employee"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <DrawerBody className="space-y-4">
+            {modalMode !== "delete" ? (
+              <FieldGroup className="grid grid-cols-1 gap-4">
+                <Field>
+                  <FieldLabel>First Name</FieldLabel>
+                  <Input
+                    value={formValues.first_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        first_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Femi"
+                  />
+                  {!formValues.first_name && (
+                    <FieldError
+                      errors={[{ message: "First name is required" }]}
+                    />
+                  )}
+                </Field>
+                <Field>
+                  <FieldLabel>Last Name</FieldLabel>
+                  <Input
+                    value={formValues.last_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        last_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Falase"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
+                    type="email"
+                    value={formValues.email}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="name@company.com"
+                  />
+                  {!formValues.email && (
+                    <FieldError errors={[{ message: "Email is required" }]} />
+                  )}
+                </Field>
+                <Field>
+                  <FieldLabel>Phone</FieldLabel>
+                  <Input
+                    value={formValues.phone}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="+234..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Employee Code</FieldLabel>
+                  <Input
+                    value={formValues.employee_code}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        employee_code: event.target.value,
+                      }))
+                    }
+                    placeholder="EMP-001"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Employment Type</FieldLabel>
+                  <Select
+                    value={formValues.employment_type}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        employment_type: event.target.value as Employee["employment_type"],
+                      }))
+                    }
+                  >
+                    <option value="">Select type</option>
+                    {employmentOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Status</FieldLabel>
+                  <Select
+                    value={formValues.status}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        status: event.target.value as Employee["status"],
+                      }))
+                    }
+                  >
+                    <option value="">Select status</option>
+                    {statusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Department</FieldLabel>
+                  <Select
+                    value={formValues.department_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        department_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select department</option>
+                    {departments.map((department) => (
+                      <option key={department.id} value={department.id}>
+                        {department.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Designation</FieldLabel>
+                  <Select
+                    value={formValues.designation_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        designation_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select designation</option>
+                    {designations.map((designation) => (
+                      <option key={designation.id} value={designation.id}>
+                        {designation.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Level</FieldLabel>
+                  <Select
+                    value={formValues.level_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        level_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select level</option>
+                    {levels.map((level) => (
+                      <option key={level.id} value={level.id}>
+                        {level.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Manager</FieldLabel>
+                  <Select
+                    value={formValues.manager_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        manager_id: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Select manager</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.first_name} {emp.last_name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Role</FieldLabel>
+                  <Select
+                    value={formValues.role_id}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        role_id: event.target.value,
+                      }))
+                    }
+                    disabled={isMetaLoading || !companyId}
+                  >
+                    <option value="">Select role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Gender</FieldLabel>
+                  <Input
+                    value={formValues.gender}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        gender: event.target.value,
+                      }))
+                    }
+                    placeholder="Male / Female"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Hire Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={formValues.hire_date}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        hire_date: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Date of Birth</FieldLabel>
+                  <Input
+                    type="date"
+                    value={formValues.date_of_birth}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        date_of_birth: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Address</FieldLabel>
+                  <Textarea
+                    value={formValues.address}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        address: event.target.value,
+                      }))
+                    }
+                    placeholder="Employee address"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Emergency Contact Name</FieldLabel>
+                  <Input
+                    value={formValues.emergency_contact_name}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        emergency_contact_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Contact name"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Emergency Contact Phone</FieldLabel>
+                  <Input
+                    value={formValues.emergency_contact_phone}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        emergency_contact_phone: event.target.value,
+                      }))
+                    }
+                    placeholder="+234..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Profile Image URL</FieldLabel>
+                  <Input
+                    value={formValues.profile_image_url}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        profile_image_url: event.target.value,
+                      }))
+                    }
+                    placeholder="https://..."
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Password</FieldLabel>
+                  <Input
+                    type="password"
+                    value={formValues.password}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Set password"
+                  />
+                </Field>
+              </FieldGroup>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground">
+                  {activeEmployee?.first_name ?? ""}{" "}
+                  {activeEmployee?.last_name ?? ""}
+                </span>
+                ?
+              </p>
+            )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" &&
+                  (!formValues.first_name || !formValues.email || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Employee"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Employee"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }

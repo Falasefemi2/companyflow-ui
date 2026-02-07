@@ -33,9 +33,18 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "./ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { levelsApi } from "@/lib/api";
 import type { Level } from "@/lib/types";
 import { toast } from "sonner";
+import { useResponsiveModal } from "@/hooks/use-responsive-modal";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -47,6 +56,7 @@ export function LevelsPage() {
       ? window.localStorage.getItem("cf_company_id")
       : null;
   const companyId = queryCompanyId || storedCompanyId || "";
+  const { isMobile, mounted } = useResponsiveModal();
 
   const [levels, setLevels] = useState<Level[]>([]);
   const [search, setSearch] = useState("");
@@ -372,22 +382,23 @@ export function LevelsPage() {
         </Card>
       </div>
 
-      <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {modalMode === "create" && "Add Level"}
-              {modalMode === "edit" && "Edit Level"}
-              {modalMode === "delete" && "Delete Level"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {modalMode === "delete"
-                ? "This action cannot be undone."
-                : "Fill in the details below."}
-            </DrawerDescription>
-          </DrawerHeader>
+      {mounted && !isMobile ? (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" && "Add Level"}
+                {modalMode === "edit" && "Edit Level"}
+                {modalMode === "delete" && "Delete Level"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <DrawerBody>
+            <div className="space-y-4">
             {modalMode !== "delete" ? (
               <FieldGroup>
                 <Field>
@@ -471,26 +482,147 @@ export function LevelsPage() {
                 ?
               </p>
             )}
-          </DrawerBody>
+            </div>
 
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-            <Button
-              variant={modalMode === "delete" ? "destructive" : "default"}
-              onClick={handleSubmit}
-              disabled={
-                modalMode !== "delete" && (!formValues.name || !companyId)
-              }
-            >
-              {modalMode === "create" && "Create Level"}
-              {modalMode === "edit" && "Save Changes"}
-              {modalMode === "delete" && "Delete Level"}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Level"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Level"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Level"}
+                {modalMode === "edit" && "Edit Level"}
+                {modalMode === "delete" && "Delete Level"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <DrawerBody className="space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Senior"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Hierarchy Level</FieldLabel>
+                    <Input
+                      value={formValues.hierarchy_level}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          hierarchy_level: event.target.value,
+                        }))
+                      }
+                      placeholder="5"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Min Salary</FieldLabel>
+                    <Input
+                      value={formValues.min_salary}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          min_salary: event.target.value,
+                        }))
+                      }
+                      placeholder="100000"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Max Salary</FieldLabel>
+                    <Input
+                      value={formValues.max_salary}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          max_salary: event.target.value,
+                        }))
+                      }
+                      placeholder="150000"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Entry-level role with core responsibilities."
+                    />
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeLevel?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Level"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Level"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }
