@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardPage } from "@/components/dashboard";
 
 export default function Dashboard() {
   const router = useRouter();
-  const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
 
   const normalizeRole = (value: string) =>
     value
@@ -16,34 +15,26 @@ export default function Dashboard() {
       .trim();
 
   const allowedRoles = useMemo(
-    () =>
-      new Set([
-        normalizeRole("Super Admin"),
-        normalizeRole("HR Manager"),
-      ]),
+    () => new Set([normalizeRole("Super Admin"), normalizeRole("HR Manager")]),
     [],
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const checkAuth = () => {
+    if (typeof window === "undefined") return false;
     const token = window.localStorage.getItem("cf_token");
     const rawRole = window.localStorage.getItem("cf_user_role") ?? "";
-    const normalizedRole = normalizeRole(rawRole);
+    return token && allowedRoles.has(normalizeRole(rawRole));
+  };
 
-    if (!token || !allowedRoles.has(normalizedRole)) {
-      setIsAllowed(false);
+  const isAllowed = checkAuth();
+
+  useLayoutEffect(() => {
+    if (!isAllowed) {
       router.replace("/login");
-      return;
     }
+  }, [isAllowed, router]);
 
-    setIsAllowed(true);
-  }, [allowedRoles, router]);
-
-  if (isAllowed === null) {
-    return null;
-  }
-
-  if (isAllowed === false) {
+  if (!isAllowed) {
     return null;
   }
 
