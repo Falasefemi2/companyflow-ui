@@ -26,82 +26,122 @@ const api = axios.create({
   },
 });
 
+const getString = (value?: string | null): string => value ?? "";
+
+const getNullableString = (value?: string | null): string | undefined =>
+  value ?? undefined;
+
+const getNullableNumber = (value?: number | null): number | undefined =>
+  value ?? undefined;
+
+const normalizeStatus = <T extends string>(
+  value: string | null | undefined,
+  allowed: T[],
+): T | undefined => {
+  if (!value) return undefined;
+  const lower = value.toLowerCase();
+  return allowed.find((v) => v.toLowerCase() === lower) as T | undefined;
+};
+
 const normalizeDepartment = (item: RawDepartment): Department => ({
-  id: item?.id ?? item?.ID,
-  company_id: item?.company_id ?? item?.CompanyID,
-  name: item?.name ?? item?.Name,
-  code: item?.code ?? item?.Code,
-  description: item?.description ?? item?.Description,
-  parent_department_id: item?.parent_department_id ?? item?.ParentDepartmentID,
-  cost_center: item?.cost_center ?? item?.CostCenter,
-  status: item?.status ?? item?.Status,
-  created_at: item?.created_at ?? item?.CreatedAt,
-  updated_at: item?.updated_at ?? item?.UpdatedAt,
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  name: getString(item?.name ?? item?.Name),
+  code: getString(item?.code ?? item?.Code),
+  description: getString(item?.description ?? item?.Description),
+  parent_department_id: getNullableString(
+    item?.parent_department_id ?? item?.ParentDepartmentID,
+  ),
+  cost_center: getString(item?.cost_center ?? item?.CostCenter),
+  status: normalizeStatus(item?.status ?? item?.Status, ["active", "inactive"]),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
 const normalizeLevel = (item: RawLevel): Level => ({
-  id: item?.id ?? item?.ID,
-  company_id: item?.company_id ?? item?.CompanyID,
-  name: item?.name ?? item?.Name,
-  hierarchy_level: item?.hierarchy_level ?? item?.HierarchyLevel,
-  min_salary: item?.min_salary ?? item?.MinSalary,
-  max_salary: item?.max_salary ?? item?.MaxSalary,
-  description: item?.description ?? item?.Description,
-  created_at: item?.created_at ?? item?.CreatedAt,
-  updated_at: item?.updated_at ?? item?.UpdatedAt,
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  name: getString(item?.name ?? item?.Name),
+  hierarchy_level: getNullableNumber(
+    item?.hierarchy_level ?? item?.HierarchyLevel,
+  ),
+  min_salary: getNullableNumber(item?.min_salary ?? item?.MinSalary),
+  max_salary: getNullableNumber(item?.max_salary ?? item?.MaxSalary),
+  description: getString(item?.description ?? item?.Description),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
 const normalizeDesignation = (item: RawDesignation): Designation => ({
-  id: item?.id ?? item?.ID,
-  company_id: item?.company_id ?? item?.CompanyID,
-  name: item?.name ?? item?.Name,
-  description: item?.description ?? item?.Description,
-  level_id: item?.level_id ?? item?.LevelID,
-  department_id: item?.department_id ?? item?.DepartmentID,
-  status: item?.status ?? item?.Status,
-  created_at: item?.created_at ?? item?.CreatedAt,
-  updated_at: item?.updated_at ?? item?.UpdatedAt,
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  name: getString(item?.name ?? item?.Name),
+  description: getString(item?.description ?? item?.Description),
+  level_id: getNullableString(item?.level_id ?? item?.LevelID),
+  department_id: getNullableString(item?.department_id ?? item?.DepartmentID),
+  status: normalizeStatus(item?.status ?? item?.Status, ["active", "inactive"]),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
 const normalizeEmployee = (item: RawEmployee): Employee => ({
-  id: item?.id ?? item?.ID,
-  company_id: item?.company_id ?? item?.CompanyID,
-  email: item?.email ?? item?.Email,
-  phone: item?.phone ?? item?.Phone,
-  first_name: item?.first_name ?? item?.FirstName,
-  last_name: item?.last_name ?? item?.LastName,
-  employee_code: item?.employee_code ?? item?.EmployeeCode,
-  department_id: item?.department_id ?? item?.DepartmentID,
-  designation_id: item?.designation_id ?? item?.DesignationID,
-  level_id: item?.level_id ?? item?.LevelID,
-  manager_id: item?.manager_id ?? item?.ManagerID,
-  role_id: item?.role_id ?? item?.RoleID,
-  status: item?.status ?? item?.Status,
-  employment_type: item?.employment_type ?? item?.EmploymentType,
-  hire_date: item?.hire_date ?? item?.HireDate,
-  termination_date: item?.termination_date ?? item?.TerminationDate,
-  date_of_birth: item?.date_of_birth ?? item?.DateOfBirth,
-  gender: item?.gender ?? item?.Gender,
-  address: item?.address ?? item?.Address,
-  emergency_contact_name:
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  email: getString(item?.email ?? item?.Email),
+  phone: getString(item?.phone ?? item?.Phone),
+  first_name: getString(item?.first_name ?? item?.FirstName),
+  last_name: getString(item?.last_name ?? item?.LastName),
+  employee_code: getString(item?.employee_code ?? item?.EmployeeCode),
+  department_id: getNullableString(item?.department_id ?? item?.DepartmentID),
+  designation_id: getNullableString(
+    item?.designation_id ?? item?.DesignationID,
+  ),
+  level_id: getNullableString(item?.level_id ?? item?.LevelID),
+  manager_id: getNullableString(item?.manager_id ?? item?.ManagerID),
+  role_id: getNullableString(item?.role_id ?? item?.RoleID),
+  status: normalizeStatus(item?.status ?? item?.Status, [
+    "active",
+    "inactive",
+    "on_leave",
+    "terminated",
+    "probation",
+  ]),
+  employment_type: normalizeStatus(
+    item?.employment_type ?? item?.EmploymentType,
+    ["full_time", "part_time", "contract", "intern"],
+  ),
+  hire_date: getString(item?.hire_date ?? item?.HireDate),
+  termination_date: getNullableString(
+    item?.termination_date ?? item?.TerminationDate,
+  ),
+  date_of_birth: getNullableString(item?.date_of_birth ?? item?.DateOfBirth),
+  gender: getNullableString(item?.gender ?? item?.Gender),
+  address: getNullableString(item?.address ?? item?.Address),
+  emergency_contact_name: getNullableString(
     item?.emergency_contact_name ?? item?.EmergencyContactName,
-  emergency_contact_phone:
+  ),
+  emergency_contact_phone: getNullableString(
     item?.emergency_contact_phone ?? item?.EmergencyContactPhone,
-  profile_image_url: item?.profile_image_url ?? item?.ProfileImageUrl,
-  last_login_at: item?.last_login_at ?? item?.LastLoginAt,
-  created_at: item?.created_at ?? item?.CreatedAt,
-  updated_at: item?.updated_at ?? item?.UpdatedAt,
+  ),
+  profile_image_url: getNullableString(
+    item?.profile_image_url ?? item?.ProfileImageUrl,
+  ),
+  last_login_at: getNullableString(item?.last_login_at ?? item?.LastLoginAt),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
 const normalizeRole = (item: RawRole): Role => ({
-  id: item?.id ?? item.ID,
-  company_id: item?.company_id ?? item?.CompanyID,
-  name: item?.name ?? item?.Name,
-  description: item?.description ?? item?.Description,
-  is_system_role: item?.is_system_role ?? item?.IsSystemRole,
-  permission_cache: item?.permission_cache ?? item?.Permission_Cache,
-  created_at: item?.created_at ?? item?.CreatedAt,
-  updated_at: item?.updated_at ?? item.UpdatedAt,
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  name: getString(item?.name ?? item?.Name),
+  description: getString(item?.description ?? item?.Description),
+  is_system_role: Boolean(item?.is_system_role ?? item?.IsSystemRole),
+  permission_cache: (item?.permission_cache ?? item?.Permission_Cache) as
+    | string[]
+    | undefined,
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
 const getAuthToken = () => {

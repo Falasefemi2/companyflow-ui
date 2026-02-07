@@ -3,13 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Layers3,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Layers3, Pencil, Plus, Trash2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
@@ -25,7 +19,6 @@ import {
 } from "./ui/table";
 import {
   Drawer,
-  DrawerBody,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -89,15 +82,18 @@ export function LevelsPage() {
     }
 
     let isMounted = true;
-    setIsLoading(true);
-    levelsApi
-      .list(companyId, {
-        page,
-        page_size: pageSize,
-        search: search || undefined,
-      })
-      .then((response) => {
+
+    const fetchLevels = async () => {
+      setIsLoading(true);
+      try {
+        const response = await levelsApi.list(companyId, {
+          page,
+          page_size: pageSize,
+          search: search || undefined,
+        });
+
         if (!isMounted) return;
+
         setLevels(response.data.data ?? []);
         setPagination({
           page: response.data.page,
@@ -106,14 +102,19 @@ export function LevelsPage() {
           has_next: response.data.has_next,
           has_prev: response.data.has_prev,
         });
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load levels");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load levels";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchLevels();
 
     return () => {
       isMounted = false;
@@ -215,8 +216,10 @@ export function LevelsPage() {
         toast.success("Level deleted");
         closeModal();
       }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Action failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Action failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -233,7 +236,7 @@ export function LevelsPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br` from-primary to-accent flex items-center justify-center">
                 <Layers3 className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
@@ -243,6 +246,12 @@ export function LevelsPage() {
                 <p className="text-sm text-muted-foreground">
                   Manage growth levels and compensation bands
                 </p>
+                {!companyId && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Provide a company ID via `?company_id=...` or
+                    `localStorage.cf_company_id` to load data.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -311,7 +320,9 @@ export function LevelsPage() {
                   )}
                   {levels.map((level) => (
                     <TableRow key={level.id}>
-                      <TableCell className="font-medium">{level.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {level.name}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {level.hierarchy_level ?? "—"}
                       </TableCell>
@@ -399,89 +410,89 @@ export function LevelsPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-            {modalMode !== "delete" ? (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input
-                    value={formValues.name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="L1"
-                  />
-                  {!formValues.name && (
-                    <FieldError errors={[{ message: "Name is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Hierarchy Level</FieldLabel>
-                  <Input
-                    value={formValues.hierarchy_level}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        hierarchy_level: event.target.value,
-                      }))
-                    }
-                    placeholder="1"
-                    type="number"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Min Salary</FieldLabel>
-                  <Input
-                    value={formValues.min_salary}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        min_salary: event.target.value,
-                      }))
-                    }
-                    placeholder="80000"
-                    type="number"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Max Salary</FieldLabel>
-                  <Input
-                    value={formValues.max_salary}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        max_salary: event.target.value,
-                      }))
-                    }
-                    placeholder="150000"
-                    type="number"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  <Textarea
-                    value={formValues.description}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                    placeholder="Entry-level role with core responsibilities."
-                  />
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeLevel?.name}
-                </span>
-                ?
-              </p>
-            )}
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="L1"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Hierarchy Level</FieldLabel>
+                    <Input
+                      value={formValues.hierarchy_level}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          hierarchy_level: event.target.value,
+                        }))
+                      }
+                      placeholder="1"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Min Salary</FieldLabel>
+                    <Input
+                      value={formValues.min_salary}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          min_salary: event.target.value,
+                        }))
+                      }
+                      placeholder="80000"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Max Salary</FieldLabel>
+                    <Input
+                      value={formValues.max_salary}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          max_salary: event.target.value,
+                        }))
+                      }
+                      placeholder="150000"
+                      type="number"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Entry-level role with core responsibilities."
+                    />
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeLevel?.name}
+                  </span>
+                  ?
+                </p>
+              )}
             </div>
 
             <DialogFooter>
@@ -518,7 +529,7 @@ export function LevelsPage() {
               </DrawerDescription>
             </DrawerHeader>
 
-            <DrawerBody className="space-y-4">
+            <div className="px-4 py-4 space-y-4">
               {modalMode !== "delete" ? (
                 <FieldGroup>
                   <Field>
@@ -589,7 +600,7 @@ export function LevelsPage() {
                           description: event.target.value,
                         }))
                       }
-                      placeholder="Entry-level role with core responsibilities."
+                      placeholder="Senior-level role with leadership responsibilities."
                     />
                   </Field>
                 </FieldGroup>
@@ -602,7 +613,7 @@ export function LevelsPage() {
                   ?
                 </p>
               )}
-            </DrawerBody>
+            </div>
 
             <DrawerFooter>
               <DrawerClose asChild>

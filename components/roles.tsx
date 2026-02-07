@@ -5,7 +5,7 @@ import { Role } from "@/lib/types";
 import { ArrowLeft, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Card } from "./ui/card";
@@ -23,7 +23,6 @@ import {
 } from "./ui/table";
 import {
   Drawer,
-  DrawerBody,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -85,15 +84,16 @@ export function RolesPage() {
     }
 
     let isMounted = true;
-    setIsLoading(true);
 
-    roleApi
-      .list(companyId, {
-        page,
-        page_size: pageSize,
-        search: search || undefined,
-      })
-      .then((rolesResponse) => {
+    const fetchRoles = async () => {
+      setIsLoading(true);
+      try {
+        const rolesResponse = await roleApi.list(companyId, {
+          page,
+          page_size: pageSize,
+          search: search || undefined,
+        });
+
         if (!isMounted) return;
 
         setRoles(rolesResponse.data.data ?? []);
@@ -104,14 +104,19 @@ export function RolesPage() {
           has_next: rolesResponse.data.has_next,
           has_prev: rolesResponse.data.has_prev,
         });
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load roles");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load roles";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchRoles();
 
     return () => {
       isMounted = false;
@@ -198,8 +203,10 @@ export function RolesPage() {
         toast.success("Role deleted");
         closeModal();
       }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Action failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Action failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -216,7 +223,7 @@ export function RolesPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br`from-primary to-accent flex items-center justify-center">
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
@@ -394,94 +401,6 @@ export function RolesPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-            {modalMode !== "delete" ? (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input
-                    value={formValues.name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="Administrator"
-                  />
-                  {!formValues.name && (
-                    <FieldError errors={[{ message: "Name is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  <Textarea
-                    value={formValues.description}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                    placeholder="Full system access and management capabilities."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Permissions</FieldLabel>
-                  <div className="space-y-2 max-h-64 overflow-y-auto border border-border/40 rounded-lg p-3">
-                    <div className="text-sm text-muted-foreground">
-                      {formValues.permissions_cache.length === 0
-                        ? "No permissions selected"
-                        : `${formValues.permissions_cache.length} permission(s) selected`}
-                    </div>
-                  </div>
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeRole?.name}
-                </span>
-                ?
-              </p>
-            )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant={modalMode === "delete" ? "destructive" : "default"}
-                onClick={handleSubmit}
-                disabled={
-                  modalMode !== "delete" && (!formValues.name || !companyId)
-                }
-              >
-                {modalMode === "create" && "Create Role"}
-                {modalMode === "edit" && "Save Changes"}
-                {modalMode === "delete" && "Delete Role"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>
-                {modalMode === "create" && "Add Role"}
-                {modalMode === "edit" && "Edit Role"}
-                {modalMode === "delete" && "Delete Role"}
-              </DrawerTitle>
-              <DrawerDescription>
-                {modalMode === "delete"
-                  ? "This action cannot be undone."
-                  : "Fill in the details below."}
-              </DrawerDescription>
-            </DrawerHeader>
-
-            <DrawerBody className="space-y-4">
               {modalMode !== "delete" ? (
                 <FieldGroup>
                   <Field>
@@ -533,7 +452,95 @@ export function RolesPage() {
                   ?
                 </p>
               )}
-            </DrawerBody>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant={modalMode === "delete" ? "destructive" : "default"}
+                onClick={handleSubmit}
+                disabled={
+                  modalMode !== "delete" && (!formValues.name || !companyId)
+                }
+              >
+                {modalMode === "create" && "Create Role"}
+                {modalMode === "edit" && "Save Changes"}
+                {modalMode === "delete" && "Delete Role"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                {modalMode === "create" && "Add Role"}
+                {modalMode === "edit" && "Edit Role"}
+                {modalMode === "delete" && "Delete Role"}
+              </DrawerTitle>
+              <DrawerDescription>
+                {modalMode === "delete"
+                  ? "This action cannot be undone."
+                  : "Fill in the details below."}
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="px-4 py-4 space-y-4">
+              {modalMode !== "delete" ? (
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Administrator"
+                    />
+                    {!formValues.name && (
+                      <FieldError errors={[{ message: "Name is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={formValues.description}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Full system access and management capabilities."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Permissions</FieldLabel>
+                    <div className="space-y-2 max-h-64 overflow-y-auto border border-border/40 rounded-lg p-3">
+                      <div className="text-sm text-muted-foreground">
+                        {formValues.permissions_cache.length === 0
+                          ? "No permissions selected"
+                          : `${formValues.permissions_cache.length} permission(s) selected`}
+                      </div>
+                    </div>
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeRole?.name}
+                  </span>
+                  ?
+                </p>
+              )}
+            </div>
 
             <DrawerFooter>
               <DrawerClose asChild>

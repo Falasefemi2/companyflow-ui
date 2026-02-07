@@ -19,7 +19,6 @@ import {
 } from "./ui/table";
 import {
   Drawer,
-  DrawerBody,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -66,8 +65,9 @@ export function DepartmentsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
-  const [activeDepartment, setActiveDepartment] =
-    useState<Department | null>(null);
+  const [activeDepartment, setActiveDepartment] = useState<Department | null>(
+    null,
+  );
   const [formValues, setFormValues] = useState({
     name: "",
     code: "",
@@ -82,16 +82,19 @@ export function DepartmentsPage() {
     }
 
     let isMounted = true;
-    setIsLoading(true);
-    const trimmedSearch = search.trim();
-    const params = trimmedSearch
-      ? { page, search: trimmedSearch }
-      : { page, page_size: pageSize };
 
-    departmentsApi
-      .list(companyId, params)
-      .then((response) => {
+    const fetchDepartments = async () => {
+      setIsLoading(true);
+      try {
+        const trimmedSearch = search.trim();
+        const params = trimmedSearch
+          ? { page, search: trimmedSearch }
+          : { page, page_size: pageSize };
+
+        const response = await departmentsApi.list(companyId, params);
+
         if (!isMounted) return;
+
         setDepartments(response.data.data ?? []);
         setPagination({
           page: response.data.page,
@@ -100,14 +103,19 @@ export function DepartmentsPage() {
           has_next: response.data.has_next,
           has_prev: response.data.has_prev,
         });
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load departments");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load departments";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchDepartments();
 
     return () => {
       isMounted = false;
@@ -193,8 +201,10 @@ export function DepartmentsPage() {
         toast.success("Department deleted");
         closeModal();
       }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Action failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Action failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -211,7 +221,7 @@ export function DepartmentsPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br`from-primary to-accent flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
@@ -221,6 +231,12 @@ export function DepartmentsPage() {
                 <p className="text-sm text-muted-foreground">
                   Manage company department structure
                 </p>
+                {!companyId && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Provide a company ID via `?company_id=...` or
+                    `localStorage.cf_company_id` to load data.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -461,7 +477,7 @@ export function DepartmentsPage() {
               </DrawerDescription>
             </DrawerHeader>
 
-            <DrawerBody className="space-y-4">
+            <div className="px-4 py-4 space-y-4">
               {modalMode !== "delete" ? (
                 <FieldGroup>
                   <Field>
@@ -516,7 +532,7 @@ export function DepartmentsPage() {
                   ?
                 </p>
               )}
-            </DrawerBody>
+            </div>
 
             <DrawerFooter>
               <DrawerClose asChild>

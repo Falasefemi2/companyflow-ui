@@ -35,7 +35,7 @@ export type Company = {
 };
 
 export type Department = {
-  id?: string;
+  id: string;
   company_id?: string;
   name?: string;
   code?: string;
@@ -48,7 +48,7 @@ export type Department = {
 };
 
 export type Designation = {
-  id?: string;
+  id: string;
   company_id?: string;
   name?: string;
   description?: string;
@@ -60,7 +60,7 @@ export type Designation = {
 };
 
 export type Employee = {
-  id?: string;
+  id: string;
   company_id?: string;
   email?: string;
   password?: string;
@@ -89,7 +89,7 @@ export type Employee = {
 };
 
 export type Level = {
-  id?: string;
+  id: string;
   company_id?: string;
   name?: string;
   hierarchy_level?: number;
@@ -108,7 +108,7 @@ export type LoginResponse = {
 };
 
 export type Role = {
-  id?: string;
+  id: string;
   company_id?: string;
   name?: string;
   description?: string;

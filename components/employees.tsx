@@ -20,7 +20,6 @@ import {
 } from "./ui/table";
 import {
   Drawer,
-  DrawerBody,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -150,18 +149,21 @@ export function EmployeesPage() {
 
   useEffect(() => {
     if (!canFetch) return;
+
     let isMounted = true;
-    setIsLoading(true);
 
-    const trimmedSearch = search.trim();
-    const params = trimmedSearch
-      ? { page, search: trimmedSearch }
-      : { page, page_size: pageSize };
+    const fetchEmployees = async () => {
+      setIsLoading(true);
+      try {
+        const trimmedSearch = search.trim();
+        const params = trimmedSearch
+          ? { page, search: trimmedSearch }
+          : { page, page_size: pageSize };
 
-    employeesApi
-      .list(companyId, params)
-      .then((response) => {
+        const response = await employeesApi.list(companyId, params);
+
         if (!isMounted) return;
+
         setEmployees(response.data.data ?? []);
         setPagination({
           page: response.data.page,
@@ -170,14 +172,19 @@ export function EmployeesPage() {
           has_next: response.data.has_next,
           has_prev: response.data.has_prev,
         });
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load employees");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load employees";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchEmployees();
 
     return () => {
       isMounted = false;
@@ -190,36 +197,45 @@ export function EmployeesPage() {
 
   useEffect(() => {
     if (!canFetch) return;
-    let isMounted = true;
-    setIsMetaLoading(true);
 
-    Promise.all([
-      levelsApi.list(companyId, { page: 1, page_size: 200 }),
-      departmentsApi.list(companyId, { page: 1, page_size: 200 }),
-      designationsApi.list(companyId, { page: 1, page_size: 200 }),
-      roleApi.list(companyId, { page: 1, page_size: 200 }),
-    ])
-      .then(
-        ([
+    let isMounted = true;
+
+    const fetchMetadata = async () => {
+      setIsMetaLoading(true);
+      try {
+        const [
           levelsResponse,
           departmentsResponse,
           designationsResponse,
           roleResponse,
-        ]) => {
-          if (!isMounted) return;
-          setLevels(levelsResponse.data.data ?? []);
-          setDepartments(departmentsResponse.data.data ?? []);
-          setDesignations(designationsResponse.data.data ?? []);
-          setRoles(roleResponse.data.data ?? []);
-        },
-      )
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load employee metadata");
-      })
-      .finally(() => {
+        ] = await Promise.all([
+          levelsApi.list(companyId, { page: 1, page_size: 200 }),
+          departmentsApi.list(companyId, { page: 1, page_size: 200 }),
+          designationsApi.list(companyId, { page: 1, page_size: 200 }),
+          roleApi.list(companyId, { page: 1, page_size: 200 }),
+        ]);
+
+        if (!isMounted) return;
+
+        setLevels(levelsResponse.data.data ?? []);
+        setDepartments(departmentsResponse.data.data ?? []);
+        setDesignations(designationsResponse.data.data ?? []);
+        setRoles(roleResponse.data.data ?? []);
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load employee metadata";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsMetaLoading(false);
-      });
+      }
+    };
+
+    fetchMetadata();
 
     return () => {
       isMounted = false;
@@ -385,8 +401,10 @@ export function EmployeesPage() {
         toast.success("Employee deleted");
         closeModal();
       }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Action failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Action failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -403,7 +421,7 @@ export function EmployeesPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-accent flex items-center justify-center">
                 <Users2 className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
@@ -413,6 +431,12 @@ export function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   Manage employee profiles across the company
                 </p>
+                {!companyId && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Provide a company ID via `?company_id=...` or
+                    `localStorage.cf_company_id` to load data.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -483,7 +507,8 @@ export function EmployeesPage() {
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">
                         {employee.first_name || employee.last_name
-                          ? `${employee.first_name ?? ""} ${employee.last_name ?? ""
+                          ? `${employee.first_name ?? ""} ${
+                              employee.last_name ?? ""
                             }`.trim()
                           : employee.email}
                       </TableCell>
@@ -492,14 +517,14 @@ export function EmployeesPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {employee.department_id
-                          ? (departmentLookup.get(employee.department_id)?.name ??
-                            employee.department_id)
+                          ? (departmentLookup.get(employee.department_id)
+                              ?.name ?? employee.department_id)
                           : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {employee.designation_id
                           ? (designationLookup.get(employee.designation_id)
-                            ?.name ?? employee.designation_id)
+                              ?.name ?? employee.designation_id)
                           : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -583,331 +608,337 @@ export function EmployeesPage() {
             </DialogHeader>
 
             <div className="space-y-4 max-h-[calc(90vh-180px)] overflow-y-auto">
-            {modalMode !== "delete" ? (
-              <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field>
-                  <FieldLabel>First Name</FieldLabel>
-                  <Input
-                    value={formValues.first_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        first_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Femi"
-                  />
-                  {!formValues.first_name && (
-                    <FieldError
-                      errors={[{ message: "First name is required" }]}
+              {modalMode !== "delete" ? (
+                <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Field>
+                    <FieldLabel>First Name</FieldLabel>
+                    <Input
+                      value={formValues.first_name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          first_name: event.target.value,
+                        }))
+                      }
+                      placeholder="Femi"
                     />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Last Name</FieldLabel>
-                  <Input
-                    value={formValues.last_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        last_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Falase"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Email</FieldLabel>
-                  <Input
-                    type="email"
-                    value={formValues.email}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        email: event.target.value,
-                      }))
-                    }
-                    placeholder="name@company.com"
-                  />
-                  {!formValues.email && (
-                    <FieldError errors={[{ message: "Email is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Phone</FieldLabel>
-                  <Input
-                    value={formValues.phone}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        phone: event.target.value,
-                      }))
-                    }
-                    placeholder="+234..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Employee Code</FieldLabel>
-                  <Input
-                    value={formValues.employee_code}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        employee_code: event.target.value,
-                      }))
-                    }
-                    placeholder="EMP-001"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Employment Type</FieldLabel>
-                  <Select
-                    value={formValues.employment_type}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        employment_type: event.target.value as NonNullable<
-                          Employee["employment_type"]
-                        >,
-                      }))
-                    }
-                  >
-                    {employmentOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option?.replace("_", " ")}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Status</FieldLabel>
-                  <Select
-                    value={formValues.status}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        status: event.target.value as NonNullable<
-                          Employee["status"]
-                        >,
-                      }))
-                    }
-                  >
-                    {statusOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option?.replace("_", " ")}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Department</FieldLabel>
-                  <Select
-                    value={formValues.department_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        department_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select department</option>
-                    {departments.map((department) => (
-                      <option key={department.id} value={department.id}>
-                        {department.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Designation</FieldLabel>
-                  <Select
-                    value={formValues.designation_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        designation_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select designation</option>
-                    {designations.map((designation) => (
-                      <option key={designation.id} value={designation.id}>
-                        {designation.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Level</FieldLabel>
-                  <Select
-                    value={formValues.level_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        level_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select level</option>
-                    {levels.map((level) => (
-                      <option key={level.id} value={level.id}>
-                        {level.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Manager ID</FieldLabel>
-                  <Input
-                    value={formValues.manager_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        manager_id: event.target.value,
-                      }))
-                    }
-                    placeholder="Manager ID"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Role</FieldLabel>
-                  <Select
-                    value={formValues.role_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        role_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Gender</FieldLabel>
-                  <Input
-                    value={formValues.gender}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        gender: event.target.value,
-                      }))
-                    }
-                    placeholder="Male / Female"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Hire Date</FieldLabel>
-                  <Input
-                    type="date"
-                    value={formValues.hire_date}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        hire_date: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Date of Birth</FieldLabel>
-                  <Input
-                    type="date"
-                    value={formValues.date_of_birth}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        date_of_birth: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field className="md:col-span-2">
-                  <FieldLabel>Address</FieldLabel>
-                  <Textarea
-                    value={formValues.address}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        address: event.target.value,
-                      }))
-                    }
-                    placeholder="Employee address"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Emergency Contact Name</FieldLabel>
-                  <Input
-                    value={formValues.emergency_contact_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        emergency_contact_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Contact name"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Emergency Contact Phone</FieldLabel>
-                  <Input
-                    value={formValues.emergency_contact_phone}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        emergency_contact_phone: event.target.value,
-                      }))
-                    }
-                    placeholder="+234..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Profile Image URL</FieldLabel>
-                  <Input
-                    value={formValues.profile_image_url}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        profile_image_url: event.target.value,
-                      }))
-                    }
-                    placeholder="https://..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Password</FieldLabel>
-                  <Input
-                    type="password"
-                    value={formValues.password}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        password: event.target.value,
-                      }))
-                    }
-                    placeholder="Set password"
-                  />
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeEmployee?.first_name ?? ""}{" "}
-                  {activeEmployee?.last_name ?? ""}
-                </span>
-                ?
-              </p>
-            )}
+                    {!formValues.first_name && (
+                      <FieldError
+                        errors={[{ message: "First name is required" }]}
+                      />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Last Name</FieldLabel>
+                    <Input
+                      value={formValues.last_name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          last_name: event.target.value,
+                        }))
+                      }
+                      placeholder="Falase"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <Input
+                      type="email"
+                      value={formValues.email}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          email: event.target.value,
+                        }))
+                      }
+                      placeholder="name@company.com"
+                    />
+                    {!formValues.email && (
+                      <FieldError errors={[{ message: "Email is required" }]} />
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Phone</FieldLabel>
+                    <Input
+                      value={formValues.phone}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          phone: event.target.value,
+                        }))
+                      }
+                      placeholder="+234..."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Employee Code</FieldLabel>
+                    <Input
+                      value={formValues.employee_code}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          employee_code: event.target.value,
+                        }))
+                      }
+                      placeholder="EMP-001"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Employment Type</FieldLabel>
+                    <Select
+                      value={formValues.employment_type}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          employment_type: event.target.value as NonNullable<
+                            Employee["employment_type"]
+                          >,
+                        }))
+                      }
+                    >
+                      {employmentOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option?.replace("_", " ")}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Status</FieldLabel>
+                    <Select
+                      value={formValues.status}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          status: event.target.value as NonNullable<
+                            Employee["status"]
+                          >,
+                        }))
+                      }
+                    >
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option?.replace("_", " ")}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Department</FieldLabel>
+                    <Select
+                      value={formValues.department_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          department_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select department</option>
+                      {departments.map((department) => (
+                        <option key={department.id} value={department.id}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Designation</FieldLabel>
+                    <Select
+                      value={formValues.designation_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          designation_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select designation</option>
+                      {designations.map((designation) => (
+                        <option key={designation.id} value={designation.id}>
+                          {designation.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Level</FieldLabel>
+                    <Select
+                      value={formValues.level_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          level_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select level</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Manager</FieldLabel>
+                    <Select
+                      value={formValues.manager_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          manager_id: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select manager</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.first_name} {emp.last_name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Role</FieldLabel>
+                    <Select
+                      value={formValues.role_id}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          role_id: event.target.value,
+                        }))
+                      }
+                      disabled={isMetaLoading || !companyId}
+                    >
+                      <option value="">Select role</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Gender</FieldLabel>
+                    <Input
+                      value={formValues.gender}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          gender: event.target.value,
+                        }))
+                      }
+                      placeholder="Male / Female"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Hire Date</FieldLabel>
+                    <Input
+                      type="date"
+                      value={formValues.hire_date}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          hire_date: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Date of Birth</FieldLabel>
+                    <Input
+                      type="date"
+                      value={formValues.date_of_birth}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          date_of_birth: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field className="md:col-span-2">
+                    <FieldLabel>Address</FieldLabel>
+                    <Textarea
+                      value={formValues.address}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          address: event.target.value,
+                        }))
+                      }
+                      placeholder="Employee address"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Emergency Contact Name</FieldLabel>
+                    <Input
+                      value={formValues.emergency_contact_name}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          emergency_contact_name: event.target.value,
+                        }))
+                      }
+                      placeholder="Contact name"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Emergency Contact Phone</FieldLabel>
+                    <Input
+                      value={formValues.emergency_contact_phone}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          emergency_contact_phone: event.target.value,
+                        }))
+                      }
+                      placeholder="+234..."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Profile Image URL</FieldLabel>
+                    <Input
+                      value={formValues.profile_image_url}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          profile_image_url: event.target.value,
+                        }))
+                      }
+                      placeholder="https://..."
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Password</FieldLabel>
+                    <Input
+                      type="password"
+                      value={formValues.password}
+                      onChange={(event) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          password: event.target.value,
+                        }))
+                      }
+                      placeholder="Set password"
+                    />
+                  </Field>
+                </FieldGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    {activeEmployee?.first_name ?? ""}{" "}
+                    {activeEmployee?.last_name ?? ""}
+                  </span>
+                  ?
+                </p>
+              )}
             </div>
 
             <DialogFooter>
@@ -931,7 +962,7 @@ export function EmployeesPage() {
         </Dialog>
       ) : (
         <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
-          <DrawerContent>
+          <DrawerContent className="max-h-[90vh] flex flex-col">
             <DrawerHeader>
               <DrawerTitle>
                 {modalMode === "create" && "Add Employee"}
@@ -945,337 +976,348 @@ export function EmployeesPage() {
               </DrawerDescription>
             </DrawerHeader>
 
-            <DrawerBody className="space-y-4">
-            {modalMode !== "delete" ? (
-              <FieldGroup className="grid grid-cols-1 gap-4">
-                <Field>
-                  <FieldLabel>First Name</FieldLabel>
-                  <Input
-                    value={formValues.first_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        first_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Femi"
-                  />
-                  {!formValues.first_name && (
-                    <FieldError
-                      errors={[{ message: "First name is required" }]}
-                    />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Last Name</FieldLabel>
-                  <Input
-                    value={formValues.last_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        last_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Falase"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Email</FieldLabel>
-                  <Input
-                    type="email"
-                    value={formValues.email}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        email: event.target.value,
-                      }))
-                    }
-                    placeholder="name@company.com"
-                  />
-                  {!formValues.email && (
-                    <FieldError errors={[{ message: "Email is required" }]} />
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel>Phone</FieldLabel>
-                  <Input
-                    value={formValues.phone}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        phone: event.target.value,
-                      }))
-                    }
-                    placeholder="+234..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Employee Code</FieldLabel>
-                  <Input
-                    value={formValues.employee_code}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        employee_code: event.target.value,
-                      }))
-                    }
-                    placeholder="EMP-001"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Employment Type</FieldLabel>
-                  <Select
-                    value={formValues.employment_type}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        employment_type: event.target.value as Employee["employment_type"],
-                      }))
-                    }
-                  >
-                    <option value="">Select type</option>
-                    {employmentOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Status</FieldLabel>
-                  <Select
-                    value={formValues.status}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        status: event.target.value as Employee["status"],
-                      }))
-                    }
-                  >
-                    <option value="">Select status</option>
-                    {statusOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Department</FieldLabel>
-                  <Select
-                    value={formValues.department_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        department_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select department</option>
-                    {departments.map((department) => (
-                      <option key={department.id} value={department.id}>
-                        {department.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Designation</FieldLabel>
-                  <Select
-                    value={formValues.designation_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        designation_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select designation</option>
-                    {designations.map((designation) => (
-                      <option key={designation.id} value={designation.id}>
-                        {designation.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Level</FieldLabel>
-                  <Select
-                    value={formValues.level_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        level_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select level</option>
-                    {levels.map((level) => (
-                      <option key={level.id} value={level.id}>
-                        {level.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Manager</FieldLabel>
-                  <Select
-                    value={formValues.manager_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        manager_id: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Select manager</option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.first_name} {emp.last_name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Role</FieldLabel>
-                  <Select
-                    value={formValues.role_id}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        role_id: event.target.value,
-                      }))
-                    }
-                    disabled={isMetaLoading || !companyId}
-                  >
-                    <option value="">Select role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Gender</FieldLabel>
-                  <Input
-                    value={formValues.gender}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        gender: event.target.value,
-                      }))
-                    }
-                    placeholder="Male / Female"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Hire Date</FieldLabel>
-                  <Input
-                    type="date"
-                    value={formValues.hire_date}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        hire_date: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Date of Birth</FieldLabel>
-                  <Input
-                    type="date"
-                    value={formValues.date_of_birth}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        date_of_birth: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Address</FieldLabel>
-                  <Textarea
-                    value={formValues.address}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        address: event.target.value,
-                      }))
-                    }
-                    placeholder="Employee address"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Emergency Contact Name</FieldLabel>
-                  <Input
-                    value={formValues.emergency_contact_name}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        emergency_contact_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Contact name"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Emergency Contact Phone</FieldLabel>
-                  <Input
-                    value={formValues.emergency_contact_phone}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        emergency_contact_phone: event.target.value,
-                      }))
-                    }
-                    placeholder="+234..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Profile Image URL</FieldLabel>
-                  <Input
-                    value={formValues.profile_image_url}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        profile_image_url: event.target.value,
-                      }))
-                    }
-                    placeholder="https://..."
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>Password</FieldLabel>
-                  <Input
-                    type="password"
-                    value={formValues.password}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        password: event.target.value,
-                      }))
-                    }
-                    placeholder="Set password"
-                  />
-                </Field>
-              </FieldGroup>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {activeEmployee?.first_name ?? ""}{" "}
-                  {activeEmployee?.last_name ?? ""}
-                </span>
-                ?
-              </p>
-            )}
-            </DrawerBody>
+            <div className="overflow-y-auto flex-1 px-4">
+              <div className="space-y-4">
+                {modalMode !== "delete" ? (
+                  <FieldGroup className="grid grid-cols-1 gap-4">
+                    <Field>
+                      <FieldLabel>First Name</FieldLabel>
+                      <Input
+                        value={formValues.first_name}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            first_name: event.target.value,
+                          }))
+                        }
+                        placeholder="Femi"
+                      />
+                      {!formValues.first_name && (
+                        <FieldError
+                          errors={[{ message: "First name is required" }]}
+                        />
+                      )}
+                    </Field>
+                    <Field>
+                      <FieldLabel>Last Name</FieldLabel>
+                      <Input
+                        value={formValues.last_name}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            last_name: event.target.value,
+                          }))
+                        }
+                        placeholder="Falase"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <Input
+                        type="email"
+                        value={formValues.email}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="name@company.com"
+                      />
+                      {!formValues.email && (
+                        <FieldError
+                          errors={[{ message: "Email is required" }]}
+                        />
+                      )}
+                    </Field>
+                    <Field>
+                      <FieldLabel>Phone</FieldLabel>
+                      <Input
+                        value={formValues.phone}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            phone: event.target.value,
+                          }))
+                        }
+                        placeholder="+234..."
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Employee Code</FieldLabel>
+                      <Input
+                        value={formValues.employee_code}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            employee_code: event.target.value,
+                          }))
+                        }
+                        placeholder="EMP-001"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Employment Type</FieldLabel>
+                      <Select
+                        value={formValues.employment_type}
+                        onChange={(event) => {
+                          const value = event.target.value as NonNullable<
+                            Employee["employment_type"]
+                          >;
+                          setFormValues((prev) => ({
+                            ...prev,
+                            employment_type: value,
+                          }));
+                        }}
+                      >
+                        <option value="">Select type</option>
+                        {employmentOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option?.replace("_", " ")}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Status</FieldLabel>
+                      <Select
+                        value={formValues.status}
+                        onChange={(event) => {
+                          const value = event.target.value as NonNullable<
+                            Employee["status"]
+                          >;
+                          setFormValues((prev) => ({
+                            ...prev,
+                            status: value,
+                          }));
+                        }}
+                      >
+                        <option value="">Select status</option>
+                        {statusOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option?.replace("_", " ")}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Department</FieldLabel>
+                      <Select
+                        value={formValues.department_id}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            department_id: event.target.value,
+                          }))
+                        }
+                        disabled={isMetaLoading || !companyId}
+                      >
+                        <option value="">Select department</option>
+                        {departments.map((department) => (
+                          <option key={department.id} value={department.id}>
+                            {department.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Designation</FieldLabel>
+                      <Select
+                        value={formValues.designation_id}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            designation_id: event.target.value,
+                          }))
+                        }
+                        disabled={isMetaLoading || !companyId}
+                      >
+                        <option value="">Select designation</option>
+                        {designations.map((designation) => (
+                          <option key={designation.id} value={designation.id}>
+                            {designation.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Level</FieldLabel>
+                      <Select
+                        value={formValues.level_id}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            level_id: event.target.value,
+                          }))
+                        }
+                        disabled={isMetaLoading || !companyId}
+                      >
+                        <option value="">Select level</option>
+                        {levels.map((level) => (
+                          <option key={level.id} value={level.id}>
+                            {level.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Manager</FieldLabel>
+                      <Select
+                        value={formValues.manager_id}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            manager_id: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">Select manager</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.first_name} {emp.last_name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Role</FieldLabel>
+                      <Select
+                        value={formValues.role_id}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            role_id: event.target.value,
+                          }))
+                        }
+                        disabled={isMetaLoading || !companyId}
+                      >
+                        <option value="">Select role</option>
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Gender</FieldLabel>
+                      <Input
+                        value={formValues.gender}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            gender: event.target.value,
+                          }))
+                        }
+                        placeholder="Male / Female"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Hire Date</FieldLabel>
+                      <Input
+                        type="date"
+                        value={formValues.hire_date}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            hire_date: event.target.value,
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Date of Birth</FieldLabel>
+                      <Input
+                        type="date"
+                        value={formValues.date_of_birth}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            date_of_birth: event.target.value,
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Address</FieldLabel>
+                      <Textarea
+                        value={formValues.address}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            address: event.target.value,
+                          }))
+                        }
+                        placeholder="Employee address"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Emergency Contact Name</FieldLabel>
+                      <Input
+                        value={formValues.emergency_contact_name}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            emergency_contact_name: event.target.value,
+                          }))
+                        }
+                        placeholder="Contact name"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Emergency Contact Phone</FieldLabel>
+                      <Input
+                        value={formValues.emergency_contact_phone}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            emergency_contact_phone: event.target.value,
+                          }))
+                        }
+                        placeholder="+234..."
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Profile Image URL</FieldLabel>
+                      <Input
+                        value={formValues.profile_image_url}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            profile_image_url: event.target.value,
+                          }))
+                        }
+                        placeholder="https://..."
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Password</FieldLabel>
+                      <Input
+                        type="password"
+                        value={formValues.password}
+                        onChange={(event) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            password: event.target.value,
+                          }))
+                        }
+                        placeholder="Set password"
+                      />
+                    </Field>
+                  </FieldGroup>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Are you sure you want to delete{" "}
+                    <span className="font-semibold text-foreground">
+                      {activeEmployee?.first_name ?? ""}{" "}
+                      {activeEmployee?.last_name ?? ""}
+                    </span>
+                    ?
+                  </p>
+                )}
+              </div>
+            </div>
 
             <DrawerFooter>
               <DrawerClose asChild>

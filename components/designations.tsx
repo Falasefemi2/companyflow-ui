@@ -3,14 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  BarChart3,
-  Building2,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Building2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
@@ -27,7 +20,6 @@ import {
 } from "./ui/table";
 import {
   Drawer,
-  DrawerBody,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -94,15 +86,18 @@ export function DesignationsPage() {
     }
 
     let isMounted = true;
-    setIsLoading(true);
-    designationsApi
-      .list(companyId, {
-        page,
-        page_size: pageSize,
-        search: search || undefined,
-      })
-      .then((response) => {
+
+    const fetchDesignations = async () => {
+      setIsLoading(true);
+      try {
+        const response = await designationsApi.list(companyId, {
+          page,
+          page_size: pageSize,
+          search: search || undefined,
+        });
+
         if (!isMounted) return;
+
         setDesignations(response.data.data ?? []);
         setPagination({
           page: response.data.page,
@@ -111,14 +106,21 @@ export function DesignationsPage() {
           has_next: response.data.has_next,
           has_prev: response.data.has_prev,
         });
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load designations");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load designations";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchDesignations();
 
     return () => {
       isMounted = false;
@@ -135,24 +137,34 @@ export function DesignationsPage() {
     }
 
     let isMounted = true;
-    setIsMetaLoading(true);
 
-    Promise.all([
-      levelsApi.list(companyId, { page: 1, page_size: 200 }),
-      departmentsApi.list(companyId, { page: 1, page_size: 200 }),
-    ])
-      .then(([levelsResponse, departmentsResponse]) => {
+    const fetchMetadata = async () => {
+      setIsMetaLoading(true);
+      try {
+        const [levelsResponse, departmentsResponse] = await Promise.all([
+          levelsApi.list(companyId, { page: 1, page_size: 200 }),
+          departmentsApi.list(companyId, { page: 1, page_size: 200 }),
+        ]);
+
         if (!isMounted) return;
+
         setLevels(levelsResponse.data.data ?? []);
         setDepartments(departmentsResponse.data.data ?? []);
-      })
-      .catch((error: any) => {
-        toast.error(error?.message ?? "Failed to load departments or levels");
-      })
-      .finally(() => {
+      } catch (error: unknown) {
+        if (!isMounted) return;
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load departments or levels";
+        toast.error(errorMessage);
+      } finally {
         if (!isMounted) return;
         setIsMetaLoading(false);
-      });
+      }
+    };
+
+    fetchMetadata();
 
     return () => {
       isMounted = false;
@@ -250,8 +262,10 @@ export function DesignationsPage() {
         toast.success("Designation deleted");
         closeModal();
       }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Action failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Action failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -278,6 +292,12 @@ export function DesignationsPage() {
                 <p className="text-sm text-muted-foreground">
                   Manage roles and titles across the company
                 </p>
+                {!companyId && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Provide a company ID via `?company_id=...` or
+                    `localStorage.cf_company_id` to load data.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -353,14 +373,14 @@ export function DesignationsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {designation.level_id
-                          ? levelLookup.get(designation.level_id)?.name ??
-                            designation.level_id
+                          ? (levelLookup.get(designation.level_id)?.name ??
+                            designation.level_id)
                           : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {designation.department_id
-                          ? departmentLookup.get(designation.department_id)?.name ??
-                            designation.department_id
+                          ? (departmentLookup.get(designation.department_id)
+                              ?.name ?? designation.department_id)
                           : "—"}
                       </TableCell>
                       <TableCell>
@@ -555,7 +575,7 @@ export function DesignationsPage() {
               </DrawerDescription>
             </DrawerHeader>
 
-            <DrawerBody className="space-y-4">
+            <div className="space-y-4 px-6 py-4">
               {modalMode !== "delete" ? (
                 <FieldGroup>
                   <Field>
@@ -637,7 +657,7 @@ export function DesignationsPage() {
                   ?
                 </p>
               )}
-            </DrawerBody>
+            </div>
 
             <DrawerFooter>
               <DrawerClose asChild>

@@ -11,8 +11,6 @@ import {
 } from "./ui/dialog";
 import {
   Drawer,
-  DrawerBody,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -50,7 +48,7 @@ export function ResponsiveModal({
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <DrawerBody className="space-y-4">{children}</DrawerBody>
+          <div className="space-y-4">{children}</div>
           <DrawerFooter>{footer}</DrawerFooter>
         </DrawerContent>
       </Drawer>
