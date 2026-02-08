@@ -256,3 +256,24 @@ export type RawRole = {
   updated_at?: string;
   UpdatedAt?: string;
 };
+
+export type Permission = {
+  id: string;
+  role_id: string;
+  action: string;
+  resource: string;
+  conditions?: Record<string, unknown>;
+  created_at: string;
+};
+
+export type CreatePermissionRequest = {
+  action: string;
+  resource: string;
+  conditions?: Record<string, unknown>;
+};
+
+export type UpdatePermissionRequest = {
+  action?: string;
+  resource?: string;
+  conditions?: Record<string, unknown>;
+};

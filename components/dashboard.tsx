@@ -2,7 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { BarChart3, Building2, Layers3, Shield, Users2 } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  Layers3,
+  Shield,
+  ShieldAlert,
+  Users2,
+} from "lucide-react";
 import { Card } from "./ui/card";
 
 export function DashboardPage() {
