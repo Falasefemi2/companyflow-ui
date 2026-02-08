@@ -8,6 +8,8 @@ import type {
   Level,
   LoginResponse,
   Paginated,
+  Permission,
+  CreatePermissionRequest,
   Role,
   RawDepartment,
   RawDesignation,
@@ -475,4 +477,14 @@ export const roleApi = {
     const { data } = await api.delete<ApiResponse<null>>(`/roles/${id}`);
     return data;
   },
+};
+
+export const getRolePermissions = async (roleId: string): Promise<Permission[]> => {
+  const { data } = await api.get<ApiResponse<Permission[]>>(`/roles/${roleId}/permissions`);
+  return data.data; 
+};
+
+export const setRolePermissions = async (roleId: string, permissions: CreatePermissionRequest[]): Promise<Permission[]> => {
+  const { data } = await api.post<ApiResponse<Permission[]>>(`/roles/${roleId}/permissions`, permissions);
+  return data.data;
 };

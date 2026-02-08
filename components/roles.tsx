@@ -2,7 +2,7 @@
 
 import { roleApi } from "@/lib/api";
 import { Role } from "@/lib/types";
-import { ArrowLeft, Pencil, Plus, Shield, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Shield, Trash2, Settings } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,6 +39,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { useResponsiveModal } from "@/hooks/use-responsive-modal";
+import { PermissionsEditor } from "./permissions";
 
 type ModalMode = "create" | "edit" | "delete";
 
@@ -71,11 +72,9 @@ export function RolesPage() {
   const [formValues, setFormValues] = useState<{
     name: string;
     description: string;
-    permissions_cache: string[];
   }>({
     name: "",
     description: "",
-    permissions_cache: [],
   });
 
   useEffect(() => {
@@ -131,7 +130,6 @@ export function RolesPage() {
     setFormValues({
       name: "",
       description: "",
-      permissions_cache: [],
     });
   };
 
@@ -148,7 +146,6 @@ export function RolesPage() {
     setFormValues({
       name: role.name ?? "",
       description: role.description ?? "",
-      permissions_cache: role.permission_cache ?? [],
     });
     setIsModalOpen(true);
   };
@@ -174,7 +171,7 @@ export function RolesPage() {
         const response = await roleApi.create(companyId, {
           name: formValues.name,
           description: formValues.description || "",
-          permissions_cache: formValues.permissions_cache,
+          permissions_cache: [],
         });
         setRoles((prev) => [response.data, ...prev]);
         toast.success("Role created");
@@ -186,7 +183,6 @@ export function RolesPage() {
         const response = await roleApi.update(activeRole.id, {
           name: formValues.name,
           description: formValues.description || undefined,
-          permission_cache: formValues.permissions_cache,
         });
         setRoles((prev) =>
           prev.map((item) =>
@@ -279,7 +275,7 @@ export function RolesPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Permissions</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -328,6 +324,12 @@ export function RolesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
+                          <Link href={`/permissions?roleId=${role.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Settings className="w-4 h-4 mr-1" />
+                              Permissions
+                            </Button>
+                          </Link>
                           <Button
                             variant="outline"
                             size="sm"
@@ -432,16 +434,9 @@ export function RolesPage() {
                       placeholder="Full system access and management capabilities."
                     />
                   </Field>
-                  <Field>
-                    <FieldLabel>Permissions</FieldLabel>
-                    <div className="space-y-2 max-h-64 overflow-y-auto border border-border/40 rounded-lg p-3">
-                      <div className="text-sm text-muted-foreground">
-                        {formValues.permissions_cache.length === 0
-                          ? "No permissions selected"
-                          : `${formValues.permissions_cache.length} permission(s) selected`}
-                      </div>
-                    </div>
-                  </Field>
+                  {modalMode === "edit" && activeRole && (
+                    <PermissionsEditor roleId={activeRole.id} />
+                  )}
                 </FieldGroup>
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -520,16 +515,9 @@ export function RolesPage() {
                       placeholder="Full system access and management capabilities."
                     />
                   </Field>
-                  <Field>
-                    <FieldLabel>Permissions</FieldLabel>
-                    <div className="space-y-2 max-h-64 overflow-y-auto border border-border/40 rounded-lg p-3">
-                      <div className="text-sm text-muted-foreground">
-                        {formValues.permissions_cache.length === 0
-                          ? "No permissions selected"
-                          : `${formValues.permissions_cache.length} permission(s) selected`}
-                      </div>
-                    </div>
-                  </Field>
+                  {modalMode === "edit" && activeRole && (
+                    <PermissionsEditor roleId={activeRole.id} />
+                  )}
                 </FieldGroup>
               ) : (
                 <p className="text-sm text-muted-foreground">
