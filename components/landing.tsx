@@ -19,6 +19,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useCreateCompany } from "@/lib/hooks";
+import * as motion from "motion/react-client";
 
 const companyAdminSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -68,6 +69,10 @@ interface CompanyFormValues extends FieldValues {
     phone?: string;
   };
 }
+
+const splitText = (text: string) => {
+  return text.split(""); // Returns array of individual characters
+};
 
 export function LandingPage() {
   const { mutate, isPending } = useCreateCompany();
@@ -134,9 +139,18 @@ export function LandingPage() {
                 Manage Your Organization Effortlessly
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
-                Create your company workspace and start organizing departments,
-                managing employees, and tracking organizational structure with
-                CompanyFlow.
+                {splitText(
+                  "Create your company workspace and start organizing departments, managing employees, and tracking organizational structure with CompanyFlow.",
+                ).map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.05 }} // Each letter delays by 0.05s
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-4">
@@ -329,7 +343,21 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group p-4 rounded-lg border border-border/30 bg-secondary/20 hover:bg-secondary/40 transition-all duration-300 hover:border-primary/50 cursor-default">
+    <motion.div
+      whileHover={{
+        scale: 1.05,
+        transition: { duration: 0.2 },
+      }}
+      whileTap={{
+        scale: 0.95,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 17,
+      }}
+      className="group p-4 rounded-lg border border-border/30 bg-secondary/20 hover:bg-secondary/40 transition-all duration-300 hover:border-primary/50 cursor-default"
+    >
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
           {icon}
@@ -339,7 +367,7 @@ function FeatureCard({
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
