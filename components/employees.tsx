@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Pencil, Plus, Trash2, Users2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Upload, Users2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
@@ -109,6 +109,7 @@ export function EmployeesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isMetaLoading, setIsMetaLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -122,6 +123,9 @@ export function EmployeesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
   const [formValues, setFormValues] = useState<EmployeeFormValues>({
     first_name: "",
     last_name: "",
@@ -189,7 +193,7 @@ export function EmployeesPage() {
     return () => {
       isMounted = false;
     };
-  }, [companyId, canFetch, page, pageSize, search]);
+  }, [companyId, canFetch, page, pageSize, search, refreshKey]);
 
   useEffect(() => {
     setPage(1);
@@ -329,6 +333,49 @@ export function EmployeesPage() {
     setIsModalOpen(false);
   };
 
+  const openBulkUpload = () => {
+    setIsBulkOpen(true);
+  };
+
+  const closeBulkUpload = () => {
+    setIsBulkOpen(false);
+    setBulkFile(null);
+  };
+
+  const handleBulkOpenChange = (open: boolean) => {
+    if (!open) {
+      closeBulkUpload();
+      return;
+    }
+    setIsBulkOpen(true);
+  };
+
+  const handleBulkUpload = async () => {
+    if (!companyId) {
+      toast.error("Missing company ID. Add ?company_id=... to the URL.");
+      return;
+    }
+
+    if (!bulkFile) {
+      toast.error("Please choose a CSV file to upload.");
+      return;
+    }
+
+    setIsBulkUploading(true);
+    try {
+      await employeesApi.bulkUpload(companyId, bulkFile);
+      toast.success("Bulk upload completed");
+      closeBulkUpload();
+      setRefreshKey((prev) => prev + 1);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Bulk upload failed";
+      toast.error(errorMessage);
+    } finally {
+      setIsBulkUploading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!companyId) {
       toast.error("Missing company ID. Add ?company_id=... to the URL.");
@@ -466,6 +513,14 @@ export function EmployeesPage() {
                   placeholder="Search employees"
                   className="md:w-64"
                 />
+                <Button
+                  variant="outline"
+                  onClick={openBulkUpload}
+                  className="w-full md:w-auto h-10"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Upload
+                </Button>
                 <Button
                   onClick={openCreate}
                   className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10"
@@ -1334,6 +1389,95 @@ export function EmployeesPage() {
                 {modalMode === "create" && "Create Employee"}
                 {modalMode === "edit" && "Save Changes"}
                 {modalMode === "delete" && "Delete Employee"}
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
+
+      {mounted && !isMobile ? (
+        <Dialog open={isBulkOpen} onOpenChange={handleBulkOpenChange}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bulk Upload Employees</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file to create employees in bulk.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <Field>
+                <FieldLabel>CSV File</FieldLabel>
+                <Input
+                  type="file"
+                  accept=".csv,text/csv"
+                  key={isBulkOpen ? "bulk-open" : "bulk-closed"}
+                  onChange={(event) =>
+                    setBulkFile(event.target.files?.[0] ?? null)
+                  }
+                  disabled={!companyId}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Only CSV files are supported.
+                </p>
+              </Field>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={closeBulkUpload}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBulkUpload}
+                disabled={!bulkFile || isBulkUploading || !companyId}
+              >
+                {isBulkUploading ? "Uploading..." : "Upload CSV"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer
+          open={isBulkOpen && mounted}
+          onOpenChange={handleBulkOpenChange}
+        >
+          <DrawerContent className="max-h-[80vh]">
+            <DrawerHeader>
+              <DrawerTitle>Bulk Upload Employees</DrawerTitle>
+              <DrawerDescription>
+                Upload a CSV file to create employees in bulk.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="px-4 pb-4 space-y-4">
+              <Field>
+                <FieldLabel>CSV File</FieldLabel>
+                <Input
+                  type="file"
+                  accept=".csv,text/csv"
+                  key={isBulkOpen ? "bulk-open" : "bulk-closed"}
+                  onChange={(event) =>
+                    setBulkFile(event.target.files?.[0] ?? null)
+                  }
+                  disabled={!companyId}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Only CSV files are supported.
+                </p>
+              </Field>
+            </div>
+
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline" onClick={closeBulkUpload}>
+                  Cancel
+                </Button>
+              </DrawerClose>
+              <Button
+                onClick={handleBulkUpload}
+                disabled={!bulkFile || isBulkUploading || !companyId}
+              >
+                {isBulkUploading ? "Uploading..." : "Upload CSV"}
               </Button>
             </DrawerFooter>
           </DrawerContent>

@@ -394,6 +394,20 @@ export const employeesApi = {
     const { data } = await api.delete<ApiResponse<null>>(`/employees/${id}`);
     return data;
   },
+  bulkUpload: async (companyId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post<ApiResponse<unknown>>(
+      `/companies/${companyId}/employees/bulk`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+    return data;
+  },
 };
 
 export const levelsApi = {
