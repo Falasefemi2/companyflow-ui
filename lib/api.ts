@@ -22,6 +22,8 @@ import type {
   RawRole,
   RawLeaveType,
   RawLeaveRequest,
+  RawLeaveBalance,
+  LeaveBalance,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -546,6 +548,54 @@ const normalizeLeaveRequest = (item: RawLeaveRequest): LeaveRequest => ({
     : item?.LeaveType ? normalizeLeaveType(item.LeaveType)
     : undefined,
 });
+
+const normalizeLeaveBalance = (item: RawLeaveBalance): LeaveBalance => ({
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  employee_id: getString(item?.employee_id ?? item?.EmployeeID),
+  leave_type_id: getString(item?.leave_type_id ?? item?.LeaveTypeID),
+  leave_type_name: getString(item?.leave_type_name ?? item?.LeaveTypeName),
+  year: item?.year ?? item?.Year,
+  total_days: item?.total_days ?? item?.TotalDays,
+  used_days: item?.used_days ?? item?.UsedDays,
+  pending_days: item?.pending_days ?? item?.PendingDays,
+  carried_forward_days: item?.carried_forward_days ?? item?.CarriedForwardDays,
+  available: item?.available ?? item?.Available,
+  balance: item?.balance ?? item?.Balance,
+});
+
+export const leaveBalancesApi = {
+  // GET /employees/{employee_id}/leave-balances?year=
+  listForEmployee: async (
+    employeeId: string,
+    params: { year?: number } = {},
+  ) => {
+    const { data } = await api.get<ApiResponse<RawLeaveBalance[]>>(
+      `/employees/${employeeId}/leave-balances`,
+      { params },
+    );
+    const items = data?.data ?? [];
+    return items.map(normalizeLeaveBalance);
+  },
+
+  // GET /leave-balance?leaveTypeId=&year=
+  checkAvailable: async (leaveTypeId: string, year?: number) => {
+    const { data } = await api.get<ApiResponse<RawLeaveBalance>>(
+      `/leave-balance`,
+      { params: { leaveTypeId, year } },
+    );
+    return normalizeLeaveBalance(data.data);
+  },
+
+  // GET /leave-balance/{leave_type_id}?year=
+  getByLeaveType: async (leaveTypeId: string, year?: number) => {
+    const { data } = await api.get<ApiResponse<RawLeaveBalance>>(
+      `/leave-balance/${leaveTypeId}`,
+      { params: { year } },
+    );
+    return normalizeLeaveBalance(data.data);
+  },
+};
 
 export const leaveTypesApi = {
   list: async (
