@@ -1,3 +1,5 @@
+/** @format */
+
 import axios from "axios";
 import type {
   ApiResponse,
@@ -11,11 +13,13 @@ import type {
   Permission,
   CreatePermissionRequest,
   Role,
+  LeaveType,
   RawDepartment,
   RawDesignation,
   RawEmployee,
   RawLevel,
   RawRole,
+  RawLeaveType,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -479,12 +483,134 @@ export const roleApi = {
   },
 };
 
-export const getRolePermissions = async (roleId: string): Promise<Permission[]> => {
-  const { data } = await api.get<ApiResponse<Permission[]>>(`/roles/${roleId}/permissions`);
-  return data.data; 
+const normalizeLeaveType = (item: RawLeaveType): LeaveType => ({
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  name: getString(item?.name ?? item?.Name),
+  code: getString(item?.code ?? item?.Code),
+  description: getString(item?.description ?? item?.Description),
+  carryForwardAllowed: Boolean(
+    item?.carryForwardAllowed ??
+    item?.CarryForwardAllowed ??
+    item?.carry_forward_allowed,
+  ),
+  colorCode: getString(item?.colorCode ?? item?.ColorCode ?? item?.color_code),
+  daysAllowed: getNullableNumber(
+    item?.daysAllowed ?? item?.DaysAllowed ?? item?.days_allowed,
+  ),
+  isPaid: Boolean(item?.isPaid ?? item?.IsPaid ?? item?.is_paid),
+  maxCarryForwardDays: getNullableNumber(
+    item?.maxCarryForwardDays ??
+      item?.MaxCarryForwardDays ??
+      item?.max_carry_forward_days,
+  ),
+  requiresDocumentation: Boolean(
+    item?.requiresDocumentation ??
+    item?.RequiresDocumentation ??
+    item?.requires_documentation,
+  ),
+  status: getString(item?.status ?? item?.Status),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
+});
+
+export const leaveTypesApi = {
+  list: async (
+    companyId: string,
+    params: { page?: number; page_size?: number; search?: string } = {},
+  ) => {
+    const { data } = await api.get<ApiResponse<Paginated<LeaveType>>>(
+      `/companies/${companyId}/leave-types`,
+      { params },
+    );
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeLeaveType),
+      },
+    };
+  },
+  create: async (
+    companyId: string,
+    payload: {
+      name: string;
+      carryForwardAllowed?: boolean;
+      code?: string;
+      colorCode?: string;
+      daysAllowed?: number;
+      description?: string;
+      isPaid?: boolean;
+      maxCarryForwardDays?: number;
+      requiresDocumentation?: boolean;
+      status?: string;
+    },
+  ) => {
+    const { data } = await api.post<ApiResponse<LeaveType>>(
+      `/companies/${companyId}/leave-types`,
+      payload,
+    );
+    return {
+      ...data,
+      data: normalizeLeaveType(data.data),
+    };
+  },
+  update: async (
+    id: string,
+    payload: Partial<{
+      name?: string;
+      carryForwardAllowed?: boolean;
+      code?: string;
+      colorCode?: string;
+      daysAllowed?: number;
+      description?: string;
+      isPaid?: boolean;
+      maxCarryForwardDays?: number;
+      requiresDocumentation?: boolean;
+      status?: string;
+    }>,
+  ) => {
+    const { data } = await api.put<ApiResponse<LeaveType>>(
+      `/leave-types/${id}`,
+      payload,
+    );
+    return {
+      ...data,
+      data: normalizeLeaveType(data.data),
+    };
+  },
+  get: async (id: string) => {
+    const { data } = await api.get<ApiResponse<LeaveType>>(
+      `/leave-types/${id}`,
+    );
+    return {
+      ...data,
+      data: normalizeLeaveType(data.data),
+    };
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<null>>(`/leave-types/${id}`);
+    return data;
+  },
 };
 
-export const setRolePermissions = async (roleId: string, permissions: CreatePermissionRequest[]): Promise<Permission[]> => {
-  const { data } = await api.post<ApiResponse<Permission[]>>(`/roles/${roleId}/permissions`, permissions);
+export const getRolePermissions = async (
+  roleId: string,
+): Promise<Permission[]> => {
+  const { data } = await api.get<ApiResponse<Permission[]>>(
+    `/roles/${roleId}/permissions`,
+  );
+  return data.data;
+};
+
+export const setRolePermissions = async (
+  roleId: string,
+  permissions: CreatePermissionRequest[],
+): Promise<Permission[]> => {
+  const { data } = await api.post<ApiResponse<Permission[]>>(
+    `/roles/${roleId}/permissions`,
+    permissions,
+  );
   return data.data;
 };

@@ -76,6 +76,12 @@ export function DashboardPage() {
               description="Set up levels to support growth and structure."
             />
             <DashboardCard
+              href="/leave-types"
+              icon={<ShieldAlert className="w-5 h-5" />}
+              title="Leave Types"
+              description="Manage leave categories like sick, vacation, and more."
+            />
+            <DashboardCard
               href="/roles"
               icon={<Shield className="w-5 h-5" />}
               title="Roles"
