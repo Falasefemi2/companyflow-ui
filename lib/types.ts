@@ -333,3 +333,57 @@ export type RawLeaveType = {
   updated_at?: string;
   UpdatedAt?: string;
 };
+
+export type LeaveRequest = {
+  id: string;
+  company_id?: string;
+  employee_id?: string;
+  leave_type_id?: string;
+  start_date?: string;
+  end_date?: string;
+  reason?: string;
+  status?: "pending" | "approved" | "rejected";
+  approved_by?: string;
+  approved_at?: string;
+  rejection_reason?: string;
+  rejected_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  employee?: Employee;
+  leave_type?: LeaveType;
+};
+
+export type RawLeaveRequest = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  employee_id?: string;
+  EmployeeID?: string;
+  leave_type_id?: string;
+  LeaveTypeID?: string;
+  start_date?: string;
+  StartDate?: string;
+  end_date?: string;
+  EndDate?: string;
+  reason?: string;
+  Reason?: string;
+  status?: "pending" | "approved" | "rejected";
+  Status?: "pending" | "approved" | "rejected";
+  approved_by?: string;
+  ApprovedBy?: string;
+  approved_at?: string;
+  ApprovedAt?: string;
+  rejection_reason?: string;
+  RejectionReason?: string;
+  rejected_at?: string;
+  RejectedAt?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+  employee?: RawEmployee;
+  Employee?: RawEmployee;
+  leave_type?: RawLeaveType;
+  LeaveType?: RawLeaveType;
+};

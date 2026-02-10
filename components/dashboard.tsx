@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   BarChart3,
   Building2,
+  ClipboardCheck,
   Layers3,
   Shield,
   ShieldAlert,
@@ -87,6 +88,13 @@ export function DashboardPage() {
               title="Roles"
               description="Manage user roles and permissions"
             />
+            <DashboardCard
+              href="/approvals"
+              icon={<ClipboardCheck className="w-5 h-5" />}
+              title="Approvals"
+              description="Review and approve pending requests"
+            />
+
           </div>
 
           <Card className="p-6 border border-border/50 bg-card/50 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-150">

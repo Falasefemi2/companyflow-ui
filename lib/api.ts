@@ -14,12 +14,14 @@ import type {
   CreatePermissionRequest,
   Role,
   LeaveType,
+  LeaveRequest,
   RawDepartment,
   RawDesignation,
   RawEmployee,
   RawLevel,
   RawRole,
   RawLeaveType,
+  RawLeaveRequest,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -514,6 +516,37 @@ const normalizeLeaveType = (item: RawLeaveType): LeaveType => ({
   updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
 });
 
+const normalizeLeaveRequest = (item: RawLeaveRequest): LeaveRequest => ({
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  employee_id: getString(item?.employee_id ?? item?.EmployeeID),
+  leave_type_id: getString(item?.leave_type_id ?? item?.LeaveTypeID),
+  start_date: getString(item?.start_date ?? item?.StartDate),
+  end_date: getString(item?.end_date ?? item?.EndDate),
+  reason: getNullableString(item?.reason ?? item?.Reason),
+  status: normalizeStatus(item?.status ?? item?.Status, [
+    "pending",
+    "approved",
+    "rejected",
+  ]) as "pending" | "approved" | "rejected" | undefined,
+  approved_by: getNullableString(item?.approved_by ?? item?.ApprovedBy),
+  approved_at: getNullableString(item?.approved_at ?? item?.ApprovedAt),
+  rejection_reason: getNullableString(
+    item?.rejection_reason ?? item?.RejectionReason,
+  ),
+  rejected_at: getNullableString(item?.rejected_at ?? item?.RejectedAt),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
+  employee:
+    item?.employee ? normalizeEmployee(item.employee)
+    : item?.Employee ? normalizeEmployee(item.Employee)
+    : undefined,
+  leave_type:
+    item?.leave_type ? normalizeLeaveType(item.leave_type)
+    : item?.LeaveType ? normalizeLeaveType(item.LeaveType)
+    : undefined,
+});
+
 export const leaveTypesApi = {
   list: async (
     companyId: string,
@@ -592,6 +625,76 @@ export const leaveTypesApi = {
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/leave-types/${id}`);
     return data;
+  },
+};
+
+export const leaveRequestsApi = {
+  list: async (
+    params: {
+      page?: number;
+      pageSize?: number;
+      employeeId?: string;
+      status?: string;
+    } = {},
+  ) => {
+    const { data } = await api.get<ApiResponse<Paginated<LeaveRequest>>>(
+      `/leave-requests`,
+      { params },
+    );
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeLeaveRequest),
+      },
+    };
+  },
+  create: async (payload: {
+    leaveTypeId: string;
+    startDate: string;
+    endDate: string;
+    daysRequested: number;
+    reason?: string;
+    attachment?: string;
+  }) => {
+    const { data } = await api.post<ApiResponse<LeaveRequest>>(
+      `/leave-requests`,
+      payload,
+    );
+    return {
+      ...data,
+      data: normalizeLeaveRequest(data.data),
+    };
+  },
+  approve: async (id: string) => {
+    const { data } = await api.post<ApiResponse<LeaveRequest>>(
+      `/leave-requests/${id}/approve`,
+      { id },
+    );
+    return {
+      ...data,
+      data: normalizeLeaveRequest(data.data),
+    };
+  },
+  reject: async (id: string) => {
+    const { data } = await api.post<ApiResponse<LeaveRequest>>(
+      `/leave-requests/${id}/reject`,
+      { id },
+    );
+    return {
+      ...data,
+      data: normalizeLeaveRequest(data.data),
+    };
+  },
+  withdraw: async (id: string) => {
+    const { data } = await api.post<ApiResponse<LeaveRequest>>(
+      `/leave-requests/${id}/withdraw`,
+    );
+    return {
+      ...data,
+      data: normalizeLeaveRequest(data.data),
+    };
   },
 };
 

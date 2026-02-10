@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
 import {
     Table,
     TableBody,
@@ -342,7 +343,7 @@ export function LeaveTypesPage() {
 
             {mounted && !isMobile ? (
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="max-w-lg">
+                    <DialogContent className="max-w-lg flex flex-col max-h-[90vh]">
                         <DialogHeader>
                             <DialogTitle>{modalMode === "create" ? "Add Leave Type" : modalMode === "edit" ? "Edit Leave Type" : "Delete Leave Type"}</DialogTitle>
                             <DialogDescription>
@@ -350,7 +351,7 @@ export function LeaveTypesPage() {
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto flex-1 pr-4">
                             {modalMode !== "delete" ? (
                                 <FieldGroup>
                                     <Field>
@@ -370,6 +371,38 @@ export function LeaveTypesPage() {
                                         <FieldLabel>Description</FieldLabel>
                                         <Textarea value={formValues.description} onChange={(e) => setFormValues((prev) => ({ ...prev, description: e.target.value }))} />
                                     </Field>
+                                    <Field>
+                                        <FieldLabel>Color Code</FieldLabel>
+                                        <Input type="color" value={formValues.colorCode} onChange={(e) => setFormValues((prev) => ({ ...prev, colorCode: e.target.value }))} />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Status</FieldLabel>
+                                        <Input value={formValues.status} onChange={(e) => setFormValues((prev) => ({ ...prev, status: e.target.value }))} placeholder="active" />
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Is Paid</FieldLabel>
+                                            <Switch checked={formValues.isPaid} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, isPaid: checked }))} />
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Requires Documentation</FieldLabel>
+                                            <Switch checked={formValues.requiresDocumentation} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, requiresDocumentation: checked }))} />
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Carry Forward Allowed</FieldLabel>
+                                            <Switch checked={formValues.carryForwardAllowed} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, carryForwardAllowed: checked }))} />
+                                        </div>
+                                    </Field>
+                                    {formValues.carryForwardAllowed && (
+                                        <Field>
+                                            <FieldLabel>Max Carry Forward Days</FieldLabel>
+                                            <Input type="number" value={String(formValues.maxCarryForwardDays)} onChange={(e) => setFormValues((prev) => ({ ...prev, maxCarryForwardDays: Number(e.target.value) }))} />
+                                        </Field>
+                                    )}
                                 </FieldGroup>
                             ) : (
                                 <p className="text-sm text-muted-foreground">Are you sure you want to delete <span className="font-semibold text-foreground">{active?.name}</span>?</p>
@@ -388,11 +421,11 @@ export function LeaveTypesPage() {
                 </Dialog>
             ) : (
                 <Drawer open={isModalOpen && mounted} onOpenChange={setIsModalOpen}>
-                    <DrawerContent>
+                    <DrawerContent className="flex flex-col max-h-[90vh]">
                         <DrawerHeader>
                             <DrawerTitle>{modalMode === "create" ? "Add Leave Type" : modalMode === "edit" ? "Edit Leave Type" : "Delete Leave Type"}</DrawerTitle>
                         </DrawerHeader>
-                        <div className="px-4 py-4 space-y-4">
+                        <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1">
                             {modalMode !== "delete" ? (
                                 <FieldGroup>
                                     <Field>
@@ -412,6 +445,38 @@ export function LeaveTypesPage() {
                                         <FieldLabel>Description</FieldLabel>
                                         <Textarea value={formValues.description} onChange={(e) => setFormValues((prev) => ({ ...prev, description: e.target.value }))} />
                                     </Field>
+                                    <Field>
+                                        <FieldLabel>Color Code</FieldLabel>
+                                        <Input type="color" value={formValues.colorCode} onChange={(e) => setFormValues((prev) => ({ ...prev, colorCode: e.target.value }))} />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Status</FieldLabel>
+                                        <Input value={formValues.status} onChange={(e) => setFormValues((prev) => ({ ...prev, status: e.target.value }))} placeholder="active" />
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Is Paid</FieldLabel>
+                                            <Switch checked={formValues.isPaid} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, isPaid: checked }))} />
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Requires Documentation</FieldLabel>
+                                            <Switch checked={formValues.requiresDocumentation} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, requiresDocumentation: checked }))} />
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between">
+                                            <FieldLabel>Carry Forward Allowed</FieldLabel>
+                                            <Switch checked={formValues.carryForwardAllowed} onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, carryForwardAllowed: checked }))} />
+                                        </div>
+                                    </Field>
+                                    {formValues.carryForwardAllowed && (
+                                        <Field>
+                                            <FieldLabel>Max Carry Forward Days</FieldLabel>
+                                            <Input type="number" value={String(formValues.maxCarryForwardDays)} onChange={(e) => setFormValues((prev) => ({ ...prev, maxCarryForwardDays: Number(e.target.value) }))} />
+                                        </Field>
+                                    )}
                                 </FieldGroup>
                             ) : (
                                 <p className="text-sm text-muted-foreground">Are you sure you want to delete <span className="font-semibold text-foreground">{active?.name}</span>?</p>
