@@ -1,3 +1,5 @@
+/** @format */
+
 export type ApiResponse<T> = {
   success: boolean;
   message: string;
@@ -276,4 +278,58 @@ export type UpdatePermissionRequest = {
   action?: string;
   resource?: string;
   conditions?: Record<string, unknown>;
+};
+
+export type LeaveType = {
+  id: string;
+  company_id?: string;
+  name?: string;
+  code?: string;
+  description?: string;
+  carryForwardAllowed?: boolean;
+  colorCode?: string;
+  daysAllowed?: number;
+  isPaid?: boolean;
+  maxCarryForwardDays?: number;
+  requiresDocumentation?: boolean;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type RawLeaveType = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  name?: string;
+  Name?: string;
+  code?: string;
+  Code?: string;
+  description?: string;
+  Description?: string;
+  carryForwardAllowed?: boolean;
+  CarryForwardAllowed?: boolean;
+  carry_forward_allowed?: boolean | null;
+  colorCode?: string;
+  ColorCode?: string;
+  color_code?: string | null;
+  daysAllowed?: number;
+  DaysAllowed?: number;
+  days_allowed?: number | null;
+  isPaid?: boolean;
+  IsPaid?: boolean;
+  is_paid?: boolean | null;
+  maxCarryForwardDays?: number;
+  MaxCarryForwardDays?: number;
+  max_carry_forward_days?: number | null;
+  requiresDocumentation?: boolean;
+  RequiresDocumentation?: boolean;
+  requires_documentation?: boolean | null;
+  status?: string;
+  Status?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
 };
