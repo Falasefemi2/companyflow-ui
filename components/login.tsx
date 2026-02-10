@@ -44,9 +44,11 @@ export function LoginPage() {
 
   function onSubmit(data: LoginFormValues) {
     mutate(data, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         form.reset();
-        router.push("/dashboard");
+        const role = response?.data?.role ?? "User";
+        const isEmployee = role === "Employee";
+        router.push(isEmployee ? "/employee/dashboard" : "/dashboard");
       },
     });
   }
@@ -78,11 +80,11 @@ export function LoginPage() {
           <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="space-y-4">
               <h2 className="text-5xl font-bold tracking-tight text-balance">
-                Welcome Back, Admin
+                Welcome to CompanyFlow
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
                 {splitText(
-                  "Log in to manage your company workspace, departments, and team structure in CompanyFlow.",
+                  "Log in to access your company workspace and manage your work with ease.",
                 ).map((letter, index) => (
                   <motion.span
                     key={index}
@@ -123,9 +125,9 @@ export function LoginPage() {
             <Card className="p-8 border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-colors duration-300">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-2xl font-bold">Admin Login</h3>
+                  <h3 className="text-2xl font-bold">Login</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Sign in with your company admin account
+                    Sign in with your company account
                   </p>
                 </div>
 
