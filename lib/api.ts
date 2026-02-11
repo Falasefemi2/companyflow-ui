@@ -24,6 +24,10 @@ import type {
   RawLeaveRequest,
   RawLeaveBalance,
   LeaveBalance,
+  Memo,
+  RawMemo,
+  MemoPriority,
+  MemoType,
   ApprovalWorkflow,
   ApprovalWorkflowType,
   RawApprovalWorkflow,
@@ -581,6 +585,32 @@ const normalizeLeaveBalance = (item: RawLeaveBalance): LeaveBalance => ({
   balance: item?.balance ?? item?.Balance,
 });
 
+const normalizeMemo = (item: RawMemo): Memo => ({
+  id: getString(item?.id ?? item?.ID),
+  company_id: getString(item?.company_id ?? item?.CompanyID),
+  title: getString(item?.title ?? item?.Title),
+  content: getString(item?.content ?? item?.Content),
+  memo_type: getString(item?.memo_type ?? item?.MemoType),
+  priority: getString(item?.priority ?? item?.Priority),
+  reference_number: getString(
+    item?.reference_number ?? item?.ReferenceNumber,
+  ),
+  sender_id: getNullableString(item?.sender_id ?? item?.SenderID),
+  recipient_ids: (
+    Array.isArray(item?.recipient_ids) ? item.recipient_ids
+    : Array.isArray(item?.RecipientIDs) ? item.RecipientIDs
+    : []
+  ).map((id) => getString(id)),
+  read_by: (
+    Array.isArray(item?.read_by) ? item.read_by
+    : Array.isArray(item?.ReadBy) ? item.ReadBy
+    : []
+  ).map((id) => getString(id)),
+  status: getNullableString(item?.status ?? item?.Status),
+  created_at: getString(item?.created_at ?? item?.CreatedAt),
+  updated_at: getString(item?.updated_at ?? item?.UpdatedAt),
+});
+
 const normalizeApprovalWorkflow = (
   item: RawApprovalWorkflow,
 ): ApprovalWorkflow => ({
@@ -788,6 +818,55 @@ export const leaveRequestsApi = {
     return {
       ...data,
       data: normalizeLeaveRequest(data.data),
+    };
+  },
+};
+
+export const memosApi = {
+  list: async (
+    params: {
+      page?: number;
+      pageSize?: number;
+      companyId?: string;
+      recipientId?: string;
+      status?: string;
+      search?: string;
+    } = {},
+  ) => {
+    const { data } = await api.get<ApiResponse<Paginated<RawMemo>>>(`/memos`, {
+      params,
+    });
+    const items = data?.data?.data ?? [];
+    return {
+      ...data,
+      data: {
+        ...data.data,
+        data: items.map(normalizeMemo),
+      },
+    };
+  },
+  create: async (payload: {
+    companyId: string;
+    content: string;
+    memoType: MemoType | string;
+    priority: MemoPriority | string;
+    recipientIds: string[];
+    referenceNumber: string;
+    title: string;
+  }) => {
+    const { data } = await api.post<ApiResponse<RawMemo>>(`/memos`, payload);
+    return {
+      ...data,
+      data: normalizeMemo(data.data),
+    };
+  },
+  markAsRead: async (id: string) => {
+    const { data } = await api.post<ApiResponse<RawMemo>>(`/memos/${id}/read`, {
+      id,
+    });
+    return {
+      ...data,
+      data: normalizeMemo(data.data),
     };
   },
 };
