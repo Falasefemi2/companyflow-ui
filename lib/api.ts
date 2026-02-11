@@ -828,13 +828,24 @@ export const memosApi = {
       page?: number;
       pageSize?: number;
       companyId?: string;
+      employeeId?: string;
+      memoType?: string;
+      // Backward-compatible alias used in older UI code.
       recipientId?: string;
       status?: string;
       search?: string;
     } = {},
   ) => {
+    const {
+      recipientId,
+      employeeId,
+      ...restParams
+    } = params;
     const { data } = await api.get<ApiResponse<Paginated<RawMemo>>>(`/memos`, {
-      params,
+      params: {
+        ...restParams,
+        employeeId: employeeId ?? recipientId,
+      },
     });
     const items = data?.data?.data ?? [];
     return {
@@ -864,6 +875,26 @@ export const memosApi = {
     const { data } = await api.post<ApiResponse<RawMemo>>(`/memos/${id}/read`, {
       id,
     });
+    return {
+      ...data,
+      data: normalizeMemo(data.data),
+    };
+  },
+  approve: async (id: string, comments?: string) => {
+    const { data } = await api.post<ApiResponse<RawMemo>>(
+      `/memos/${id}/approve`,
+      comments ? { comments } : {},
+    );
+    return {
+      ...data,
+      data: normalizeMemo(data.data),
+    };
+  },
+  reject: async (id: string, comments: string) => {
+    const { data } = await api.post<ApiResponse<RawMemo>>(
+      `/memos/${id}/reject`,
+      { comments },
+    );
     return {
       ...data,
       data: normalizeMemo(data.data),

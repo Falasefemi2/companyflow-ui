@@ -59,6 +59,7 @@ export function EmployeeDashboardPage() {
   const [showLeaveForm, setShowLeaveForm] = React.useState(false);
   const [showMemoForm, setShowMemoForm] = React.useState(false);
   const [memoForm, setMemoForm] = React.useState<MemoFormState>(INITIAL_MEMO_FORM);
+  const [locallyReadMemoIds, setLocallyReadMemoIds] = React.useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     const storedCompanyId = localStorage.getItem("cf_company_id");
@@ -72,6 +73,10 @@ export function EmployeeDashboardPage() {
     if (storedEmployeeName) setEmployeeName(storedEmployeeName);
     if (storedDesignation) setDesignation(storedDesignation);
   }, []);
+
+  React.useEffect(() => {
+    setLocallyReadMemoIds(new Set());
+  }, [employeeId]);
 
   const { data: leaveRequestsData } = useQuery({
     queryKey: ["myLeaveRequests", employeeId],
@@ -88,7 +93,7 @@ export function EmployeeDashboardPage() {
     queryFn: () =>
       memosApi.list({
         companyId,
-        recipientId: employeeId,
+        employeeId,
         pageSize: 100,
       }),
     enabled: !!companyId && !!employeeId,
@@ -128,7 +133,27 @@ export function EmployeeDashboardPage() {
 
   const markMemoAsReadMutation = useMutation({
     mutationFn: (id: string) => memosApi.markAsRead(id),
-    onSuccess: () => {
+    onSuccess: (response, id) => {
+      setLocallyReadMemoIds((prev) => new Set(prev).add(id));
+      queryClient.setQueryData(["myMemos", companyId, employeeId], (oldData: any) => {
+        const existing = oldData?.data?.data;
+        if (!Array.isArray(existing)) return oldData;
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            data: existing.map((memo: Memo) => {
+              if (memo.id !== id) return memo;
+              const readBy = Array.isArray(memo.read_by) ? memo.read_by : [];
+              return {
+                ...memo,
+                status: response?.data?.status ?? memo.status ?? "read",
+                read_by: readBy.includes(employeeId) ? readBy : [...readBy, employeeId],
+              };
+            }),
+          },
+        };
+      });
       queryClient.invalidateQueries({ queryKey: ["myMemos"] });
       toast.success("Memo marked as read.");
     },
@@ -147,12 +172,13 @@ export function EmployeeDashboardPage() {
 
   const isMemoRead = React.useCallback(
     (memo: Memo) => {
+      if (locallyReadMemoIds.has(memo.id)) return true;
       const isReadByRecipient =
         Array.isArray(memo.read_by) && memo.read_by.includes(employeeId);
       const hasReadStatus = (memo.status ?? "").toLowerCase() === "read";
       return isReadByRecipient || hasReadStatus;
     },
-    [employeeId],
+    [employeeId, locallyReadMemoIds],
   );
 
   const stats = React.useMemo(() => {
