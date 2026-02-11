@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X } from "lucide-react";
 import { leaveRequestsApi, employeesApi, leaveTypesApi, memosApi } from "@/lib/api";
 import { LeaveRequest, Employee, Memo } from "@/lib/types";
+import { formatDisplayDate } from "@/lib/date";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -186,17 +187,6 @@ export function ApprovalsPage() {
     }, {} as Record<string, { id: string; name?: string }>);
   }, [leaveTypesData]);
 
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const getStatusBadgeClass = (status?: string) => {
     if (status === "approved") return "bg-green-100 text-green-800";
     if (status === "rejected") return "bg-red-100 text-red-800";
@@ -352,8 +342,8 @@ export function ApprovalsPage() {
                                 : undefined) ??
                               "-"}
                           </TableCell>
-                          <TableCell>{formatDate(request.start_date)}</TableCell>
-                          <TableCell>{formatDate(request.end_date)}</TableCell>
+                          <TableCell>{formatDisplayDate(request.start_date)}</TableCell>
+                          <TableCell>{formatDisplayDate(request.end_date)}</TableCell>
                           <TableCell>
                             <span
                               className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusBadgeClass(request.status)}`}
@@ -529,7 +519,7 @@ export function ApprovalsPage() {
                                   .join(", ")
                               : "-"}
                           </TableCell>
-                          <TableCell>{formatDate(memo.created_at)}</TableCell>
+                          <TableCell>{formatDisplayDate(memo.created_at)}</TableCell>
                           <TableCell>
                             {(memo.status ?? "pending") === "pending" && (
                               <div className="flex gap-2">
@@ -635,11 +625,11 @@ export function ApprovalsPage() {
                 </div>
                 <div>
                   <span className="font-semibold">From:</span>{" "}
-                  {formatDate(selectedLeaveRequest.start_date)}
+                  {formatDisplayDate(selectedLeaveRequest.start_date)}
                 </div>
                 <div>
                   <span className="font-semibold">To:</span>{" "}
-                  {formatDate(selectedLeaveRequest.end_date)}
+                  {formatDisplayDate(selectedLeaveRequest.end_date)}
                 </div>
                 <div>
                   <span className="font-semibold">Reason:</span>{" "}

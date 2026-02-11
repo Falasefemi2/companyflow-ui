@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { leaveRequestsApi, memosApi } from "@/lib/api";
 import { LeaveRequest, Memo } from "@/lib/types";
+import { formatDateRange } from "@/lib/date";
 import { toast } from "sonner";
 import { LeaveRequestForm } from "./leave-request-form";
 import { Button } from "./ui/button";
@@ -54,8 +55,6 @@ export function EmployeeDashboardPage() {
   const queryClient = useQueryClient();
   const [companyId, setCompanyId] = React.useState<string>("");
   const [employeeId, setEmployeeId] = React.useState<string>("");
-  const [employeeName, setEmployeeName] = React.useState<string>("");
-  const [designation, setDesignation] = React.useState<string>("");
   const [showLeaveForm, setShowLeaveForm] = React.useState(false);
   const [showMemoForm, setShowMemoForm] = React.useState(false);
   const [memoForm, setMemoForm] = React.useState<MemoFormState>(INITIAL_MEMO_FORM);
@@ -64,14 +63,9 @@ export function EmployeeDashboardPage() {
   React.useEffect(() => {
     const storedCompanyId = localStorage.getItem("cf_company_id");
     const storedEmployeeId = localStorage.getItem("cf_employee_id");
-    const storedEmployeeName =
-      localStorage.getItem("cf_user_name") || localStorage.getItem("cf_user_email");
-    const storedDesignation = localStorage.getItem("cf_user_designation");
 
     if (storedCompanyId) setCompanyId(storedCompanyId);
     if (storedEmployeeId) setEmployeeId(storedEmployeeId);
-    if (storedEmployeeName) setEmployeeName(storedEmployeeName);
-    if (storedDesignation) setDesignation(storedDesignation);
   }, []);
 
   React.useEffect(() => {
@@ -244,12 +238,6 @@ export function EmployeeDashboardPage() {
                   <p className="text-sm text-muted-foreground">Employee Dashboard</p>
                 </div>
               </div>
-              {employeeName && (
-                <div className="text-right">
-                  <p className="text-sm font-medium">{employeeName}</p>
-                  <p className="text-xs text-muted-foreground">{designation}</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -344,7 +332,7 @@ export function EmployeeDashboardPage() {
                           <div>
                             <p className="font-semibold text-sm">{request.leave_type?.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {request.start_date} to {request.end_date}
+                              {formatDateRange(request.start_date, request.end_date)}
                             </p>
                           </div>
                         </div>
@@ -423,7 +411,7 @@ export function EmployeeDashboardPage() {
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {memo.memo_type || "general"} • {memo.priority || "low"} •{" "}
+                            {memo.memo_type || "general"} | {memo.priority || "low"} |{" "}
                             {memo.reference_number || "No reference"}
                           </p>
                           <p className="text-sm text-muted-foreground line-clamp-2">{memo.content}</p>
