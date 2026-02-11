@@ -429,3 +429,41 @@ export type RawLeaveBalance = {
   balance?: number;
   Balance?: number;
 };
+
+export type ApprovalWorkflowType = "leave" | "memo" | "expense";
+
+export type ApprovalWorkflow = {
+  id: string;
+  companyId?: string;
+  departmentId?: string;
+  isActive?: boolean;
+  steps?: number[];
+  workflowType?: ApprovalWorkflowType;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type RawApprovalWorkflow = {
+  id?: string;
+  ID?: string;
+  companyId?: string;
+  CompanyID?: string;
+  company_id?: string;
+  departmentId?: string;
+  DepartmentID?: string;
+  department_id?: string;
+  isActive?: boolean;
+  IsActive?: boolean;
+  is_active?: boolean;
+  steps?: number[];
+  Steps?: number[];
+  workflowType?: ApprovalWorkflowType;
+  WorkflowType?: ApprovalWorkflowType;
+  workflow_type?: ApprovalWorkflowType;
+  createdAt?: string;
+  CreatedAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  UpdatedAt?: string;
+  updated_at?: string;
+};

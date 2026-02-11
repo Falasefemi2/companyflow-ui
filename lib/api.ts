@@ -24,6 +24,9 @@ import type {
   RawLeaveRequest,
   RawLeaveBalance,
   LeaveBalance,
+  ApprovalWorkflow,
+  ApprovalWorkflowType,
+  RawApprovalWorkflow,
 } from "./types";
 import { CreateCompanyPayload } from "./schema";
 
@@ -578,6 +581,33 @@ const normalizeLeaveBalance = (item: RawLeaveBalance): LeaveBalance => ({
   balance: item?.balance ?? item?.Balance,
 });
 
+const normalizeApprovalWorkflow = (
+  item: RawApprovalWorkflow,
+): ApprovalWorkflow => ({
+  id: getString(item?.id ?? item?.ID),
+  companyId: getNullableString(
+    item?.companyId ?? item?.CompanyID ?? item?.company_id,
+  ),
+  departmentId: getNullableString(
+    item?.departmentId ?? item?.DepartmentID ?? item?.department_id,
+  ),
+  isActive:
+    item?.isActive ?? item?.IsActive ?? item?.is_active ?? undefined,
+  steps: Array.isArray(item?.steps ?? item?.Steps)
+    ? (item?.steps ?? item?.Steps ?? []).map((step) => Number(step))
+    : undefined,
+  workflowType: normalizeStatus(
+    item?.workflowType ?? item?.WorkflowType ?? item?.workflow_type,
+    ["leave", "memo", "expense"],
+  ),
+  createdAt: getNullableString(
+    item?.createdAt ?? item?.CreatedAt ?? item?.created_at,
+  ),
+  updatedAt: getNullableString(
+    item?.updatedAt ?? item?.UpdatedAt ?? item?.updated_at,
+  ),
+});
+
 export const leaveBalancesApi = {
   // GET /employees/{employee_id}/leave-balances?year=
   listForEmployee: async (
@@ -759,6 +789,37 @@ export const leaveRequestsApi = {
       ...data,
       data: normalizeLeaveRequest(data.data),
     };
+  },
+};
+
+export const approvalWorkflowsApi = {
+  list: async (params: {
+    workflowType?: ApprovalWorkflowType;
+    departmentId?: string;
+    onlyActive?: boolean;
+  } = {}) => {
+    const { data } = await api.get<
+      ApiResponse<RawApprovalWorkflow[] | Paginated<RawApprovalWorkflow>>
+    >(`/approval-workflows`, { params });
+
+    const rawItems = Array.isArray(data?.data)
+      ? data.data
+      : (data?.data?.data ?? []);
+
+    return rawItems.map(normalizeApprovalWorkflow);
+  },
+  create: async (payload: {
+    companyId: string;
+    departmentId: string;
+    isActive: boolean;
+    steps: number[];
+    workflowType: ApprovalWorkflowType;
+  }) => {
+    const { data } = await api.post<ApiResponse<RawApprovalWorkflow>>(
+      `/approval-workflows`,
+      payload,
+    );
+    return normalizeApprovalWorkflow(data.data);
   },
 };
 
