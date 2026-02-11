@@ -95,6 +95,12 @@ export function DashboardPage() {
               description="Review and approve pending requests"
             />
             <DashboardCard
+              href="/approval-workflows"
+              icon={<ClipboardCheck className="w-5 h-5" />}
+              title="Approval Workflows"
+              description="Create and manage memo, leave, and expense workflows."
+            />
+            <DashboardCard
               href="/leave-balance"
               icon={<ShieldAlert className="w-5 h-5" />}
               title="Leave Balance"
