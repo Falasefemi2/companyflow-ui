@@ -29,13 +29,38 @@ export const useLogin = () => {
 
     onSuccess: (response) => {
       const token = response?.data?.token;
+      let decodedTokenClaims: Record<string, unknown> | null = null;
+
+      if (token && typeof window !== "undefined") {
+        try {
+          const payload = token.split(".")[1];
+          if (payload) {
+            const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+            const padded =
+              normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+            const json = window.atob(padded);
+            decodedTokenClaims = JSON.parse(json) as Record<string, unknown>;
+          }
+        } catch {
+          decodedTokenClaims = null;
+        }
+      }
+
       if (token && typeof window !== "undefined") {
         window.localStorage.setItem("cf_token", token);
       }
       const companyId =
-        response?.data?.company?.id ?? response?.data?.employee?.company_id;
+        response?.data?.company?.id ??
+        response?.data?.employee?.company_id ??
+        (decodedTokenClaims?.company_id as string | undefined);
+      const employeeId =
+        response?.data?.employee?.id ??
+        (decodedTokenClaims?.employee_id as string | undefined);
       if (companyId && typeof window !== "undefined") {
         window.localStorage.setItem("cf_company_id", companyId);
+      }
+      if (employeeId && typeof window !== "undefined") {
+        window.localStorage.setItem("cf_employee_id", employeeId);
       }
       const firstName = response?.data?.employee?.first_name ?? "";
       const lastName = response?.data?.employee?.last_name ?? "";
