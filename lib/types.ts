@@ -388,6 +388,54 @@ export type RawLeaveRequest = {
   LeaveType?: RawLeaveType;
 };
 
+export type MemoType = "general" | "announcement" | "policy" | "reminder";
+export type MemoPriority = "low" | "medium" | "high";
+
+export type Memo = {
+  id: string;
+  company_id?: string;
+  title?: string;
+  content?: string;
+  memo_type?: MemoType | string;
+  priority?: MemoPriority | string;
+  reference_number?: string;
+  sender_id?: string;
+  recipient_ids?: string[];
+  read_by?: string[];
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type RawMemo = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  title?: string;
+  Title?: string;
+  content?: string;
+  Content?: string;
+  memo_type?: string;
+  MemoType?: string;
+  priority?: string;
+  Priority?: string;
+  reference_number?: string;
+  ReferenceNumber?: string;
+  sender_id?: string;
+  SenderID?: string;
+  recipient_ids?: string[];
+  RecipientIDs?: string[];
+  read_by?: string[];
+  ReadBy?: string[];
+  status?: string;
+  Status?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+};
+
 export type LeaveBalance = {
   id?: string;
   company_id?: string;
