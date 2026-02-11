@@ -387,3 +387,45 @@ export type RawLeaveRequest = {
   leave_type?: RawLeaveType;
   LeaveType?: RawLeaveType;
 };
+
+export type LeaveBalance = {
+  id?: string;
+  company_id?: string;
+  employee_id?: string;
+  leave_type_id?: string;
+  leave_type_name?: string;
+  year?: number;
+  total_days?: number;
+  used_days?: number;
+  pending_days?: number;
+  carried_forward_days?: number;
+  available?: number;
+  balance?: number;
+};
+
+export type RawLeaveBalance = {
+  id?: string;
+  ID?: string;
+  company_id?: string;
+  CompanyID?: string;
+  employee_id?: string;
+  EmployeeID?: string;
+  leave_type_id?: string;
+  LeaveTypeID?: string;
+  leave_type_name?: string;
+  LeaveTypeName?: string;
+  year?: number;
+  Year?: number;
+  total_days?: number;
+  TotalDays?: number;
+  used_days?: number;
+  UsedDays?: number;
+  pending_days?: number;
+  PendingDays?: number;
+  carried_forward_days?: number;
+  CarriedForwardDays?: number;
+  available?: number;
+  Available?: number;
+  balance?: number;
+  Balance?: number;
+};

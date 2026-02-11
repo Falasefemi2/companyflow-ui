@@ -94,6 +94,12 @@ export function DashboardPage() {
               title="Approvals"
               description="Review and approve pending requests"
             />
+            <DashboardCard
+              href="/leave-balance"
+              icon={<ShieldAlert className="w-5 h-5" />}
+              title="Leave Balance"
+              description="View employee leave balances"
+            />
 
           </div>
 
